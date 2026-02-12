@@ -6,16 +6,16 @@ Interactive forecast models for pharmaceutical product launches in Germany. Buil
 
 > **Live Demo:** [pharma-launch-forecast.streamlit.app](https://pharma-launch-forecast.streamlit.app/)
 
-Two fundamentally different forecasting engines demonstrate the breadth of launch scenarios a Strategic Portfolio Manager faces:
+Three fundamentally different forecasting engines demonstrate the breadth of launch scenarios a Strategic Portfolio Manager faces:
 
-| | Use Case 1 | Use Case 2 |
-|---|---|---|
-| **Scenario** | Eliquis (Apixaban) Generic Entry | GLP-1: Mounjaro vs. Ozempic |
-| **Type** | Generic vs. Originator | Brand vs. Brand |
-| **Market** | Mature, eroding | Expanding, high-growth |
-| **Key Mechanic** | Aut-idem substitution, tender/Rabattvertraege | Indication layering, supply constraints |
-| **LOE** | May 2026 | n/a (patent protected) |
-| **Pricing** | Festbetrag / generic erosion | AMNOG Erstattungsbetrag |
+| | Use Case 1 | Use Case 2 | Use Case 3 |
+|---|---|---|---|
+| **Scenario** | Eliquis Generic Entry | GLP-1: Mounjaro vs. Ozempic | Rx-to-OTC Switch (PPI) |
+| **Type** | Generic vs. Originator | Brand vs. Brand | Dual Channel (Rx + OTC) |
+| **Market** | Mature, eroding | Expanding, high-growth | Channel transition |
+| **Key Mechanic** | Aut-idem, Rabattvertraege | Indication layering, supply | Consumer awareness, pricing |
+| **LOE** | May 2026 | n/a (patent protected) | n/a (OTC switch) |
+| **Pricing** | Festbetrag / generic erosion | AMNOG Erstattungsbetrag | Free OTC pricing, pharmacy margin |
 
 ## Screenshots
 
@@ -27,18 +27,23 @@ Run the apps locally to explore the interactive dashboards (see [Getting Started
 pharma-launch-forecast/
 ├── models/
 │   ├── forecast_engine.py           # Generic Entry engine (Eliquis)
-│   └── brand_competition_engine.py  # Brand Competition engine (GLP-1)
+│   ├── brand_competition_engine.py  # Brand Competition engine (GLP-1)
+│   └── rx_otc_engine.py             # Rx-to-OTC Switch engine (PPI)
 ├── app/
-│   ├── main.py                      # Streamlit app: Eliquis
-│   └── glp1.py                      # Streamlit app: GLP-1
+│   ├── app.py                       # Multi-page entry point (st.navigation)
+│   ├── main.py                      # Page: Eliquis Generic Entry
+│   ├── glp1.py                      # Page: GLP-1 Brand Competition
+│   └── rx_otc.py                    # Page: Rx-to-OTC Switch
 ├── data/
 │   ├── market_data.py               # NOAK/DOAK market data (synthetic)
 │   └── glp1_market_data.py          # GLP-1 market data (synthetic)
 ├── exports/
-│   ├── build_excel_model.py                  # Excel generator: Eliquis
-│   ├── build_glp1_excel.py                   # Excel generator: GLP-1
-│   ├── Eliquis_Launch_Forecast_v2.xlsx       # Pre-built Excel (6 sheets)
-│   └── GLP1_Brand_Competition_Forecast.xlsx  # Pre-built Excel (6 sheets)
+│   ├── build_excel_model.py                    # Excel generator: Eliquis
+│   ├── build_glp1_excel.py                     # Excel generator: GLP-1
+│   ├── build_rx_otc_excel.py                   # Excel generator: Rx-to-OTC
+│   ├── Eliquis_Launch_Forecast_v2.xlsx         # Pre-built Excel (6 sheets)
+│   ├── GLP1_Brand_Competition_Forecast.xlsx    # Pre-built Excel (6 sheets)
+│   └── RxToOTC_Switch_Forecast.xlsx            # Pre-built Excel (5 sheets)
 └── requirements.txt
 ```
 
@@ -85,26 +90,56 @@ Two perspectives with symmetric model structure:
 - Mounjaro: first-ever confidential Erstattungsbetrag in Germany (Aug 2025)
 - Ozempic supply constraints since 2022
 
+## Use Case 3: Rx-to-OTC Switch (PPI)
+
+**Question:** What happens when a prescription drug becomes available over the counter?
+
+Reference case: Omeprazol/Pantoprazol 20mg PPI switch in Germany (July 2009).
+
+Two perspectives:
+
+- **Manufacturer:** Dual-channel revenue modeling. Rx volume decays as OTC ramps up, but OTC reaches entirely new patients.
+- **Market:** Category disruption. OTC launch cannibalized antacids and collapsed H2-antagonists.
+
+**Key model features:**
+- Dual-channel dynamics: Rx exponential decay + OTC logistic S-curve ramp
+- Market expansion: 70% of OTC volume from genuinely new patients (never had Rx)
+- Adjacent category cannibalization (antacids, H2-antagonists)
+- Consumer awareness S-curve tied to marketing spend
+- PPI-typical seasonality (GI complaints peak in autumn/winter)
+- Price elasticity: patient pays 100% OTC (vs. GKV copay for Rx)
+- Pharmacy margin structure: free OTC pricing vs. regulated Rx (AMPreisV)
+- Three scenarios: Konservativ / Base Case / Optimistisch
+
+**Real-world data points incorporated:**
+- OTC market Germany 2024: EUR 10.15B (+7.1%, IQVIA)
+- PPI OTC switch 2009: only ~3% of PPI volume moved to OTC (partial switch)
+- 11.9% heartburn market expansion in year 1 post-switch
+- Antacid cannibalization: -EUR 11M; H2-antagonists: -46%
+- OTC PPI max 14 tablets/20mg per BfArM
+
 ## Excel Models
 
-Pre-built Excel workbooks are included in [`exports/`](exports/) for direct download. Each has 6 professionally formatted sheets:
+Pre-built Excel workbooks are included in [`exports/`](exports/) for direct download. Each has professionally formatted sheets:
 
 1. **INPUTS** - All parameters in editable yellow cells
 2. **Marktdaten** - Competitive landscape and market context
 3. **Forecast** - Monthly forecast with full data table + embedded charts
-4. **Dashboard** - Executive summary with scenario comparison (Bear/Base/Bull)
+4. **Dashboard** - Executive summary with scenario comparison
 5. **Methodik** - Transparency matrix classifying every data point as FAKT / ANNAHME / MODELL / LUECKE
 
-| File | Use Case | Sheets | Size |
-|---|---|---|---|
-| [`Eliquis_Launch_Forecast_v2.xlsx`](exports/Eliquis_Launch_Forecast_v2.xlsx) | Generic Entry | 6 | ~47 KB |
-| [`GLP1_Brand_Competition_Forecast.xlsx`](exports/GLP1_Brand_Competition_Forecast.xlsx) | Brand Competition | 6 | ~50 KB |
+| File | Use Case | Sheets |
+|---|---|---|
+| [`Eliquis_Launch_Forecast_v2.xlsx`](exports/Eliquis_Launch_Forecast_v2.xlsx) | Generic Entry | 6 |
+| [`GLP1_Brand_Competition_Forecast.xlsx`](exports/GLP1_Brand_Competition_Forecast.xlsx) | Brand Competition | 6 |
+| [`RxToOTC_Switch_Forecast.xlsx`](exports/RxToOTC_Switch_Forecast.xlsx) | Rx-to-OTC Switch | 5 |
 
 Regenerate them after modifying parameters:
 
 ```bash
 python exports/build_excel_model.py      # Eliquis
 python exports/build_glp1_excel.py       # GLP-1
+python exports/build_rx_otc_excel.py     # Rx-to-OTC
 ```
 
 ## Getting Started
@@ -117,11 +152,8 @@ cd pharma-launch-forecast
 # Install dependencies
 pip install -r requirements.txt
 
-# Run Eliquis app
-streamlit run app/main.py
-
-# Run GLP-1 app (separate port)
-streamlit run app/glp1.py --server.port 8502
+# Run multi-page app (all 3 use cases)
+streamlit run app/app.py
 ```
 
 ## Data Disclaimer
