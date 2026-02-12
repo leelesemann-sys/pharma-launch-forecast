@@ -36,8 +36,8 @@ desktop.ini
 # Jupyter
 .ipynb_checkpoints/
 
-# Excel output (generated, not source)
-exports/*.xlsx
+# Old/temp Excel files
+exports/Eliquis_Launch_Forecast_Model.xlsx
 
 # Data cache
 data/*.csv

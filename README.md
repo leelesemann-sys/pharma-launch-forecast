@@ -1,6 +1,10 @@
 # Pharma Launch Forecast
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://pharma-launch-forecast.streamlit.app/)
+
 Interactive forecast models for pharmaceutical product launches in Germany. Built with Python, Streamlit, and Plotly.
+
+> **Live Demo:** [pharma-launch-forecast.streamlit.app](https://pharma-launch-forecast.streamlit.app/)
 
 Two fundamentally different forecasting engines demonstrate the breadth of launch scenarios a Strategic Portfolio Manager faces:
 
@@ -31,8 +35,10 @@ pharma-launch-forecast/
 │   ├── market_data.py               # NOAK/DOAK market data (synthetic)
 │   └── glp1_market_data.py          # GLP-1 market data (synthetic)
 ├── exports/
-│   ├── build_excel_model.py         # Excel generator: Eliquis (6 sheets)
-│   └── build_glp1_excel.py          # Excel generator: GLP-1 (6 sheets)
+│   ├── build_excel_model.py                  # Excel generator: Eliquis
+│   ├── build_glp1_excel.py                   # Excel generator: GLP-1
+│   ├── Eliquis_Launch_Forecast_v2.xlsx       # Pre-built Excel (6 sheets)
+│   └── GLP1_Brand_Competition_Forecast.xlsx  # Pre-built Excel (6 sheets)
 └── requirements.txt
 ```
 
@@ -81,7 +87,7 @@ Two perspectives with symmetric model structure:
 
 ## Excel Models
 
-Both use cases generate professional Excel workbooks (6 sheets each):
+Pre-built Excel workbooks are included in [`exports/`](exports/) for direct download. Each has 6 professionally formatted sheets:
 
 1. **INPUTS** - All parameters in editable yellow cells
 2. **Marktdaten** - Competitive landscape and market context
@@ -89,7 +95,12 @@ Both use cases generate professional Excel workbooks (6 sheets each):
 4. **Dashboard** - Executive summary with scenario comparison (Bear/Base/Bull)
 5. **Methodik** - Transparency matrix classifying every data point as FAKT / ANNAHME / MODELL / LUECKE
 
-Generate them:
+| File | Use Case | Sheets | Size |
+|---|---|---|---|
+| [`Eliquis_Launch_Forecast_v2.xlsx`](exports/Eliquis_Launch_Forecast_v2.xlsx) | Generic Entry | 6 | ~47 KB |
+| [`GLP1_Brand_Competition_Forecast.xlsx`](exports/GLP1_Brand_Competition_Forecast.xlsx) | Brand Competition | 6 | ~50 KB |
+
+Regenerate them after modifying parameters:
 
 ```bash
 python exports/build_excel_model.py      # Eliquis
@@ -100,7 +111,7 @@ python exports/build_glp1_excel.py       # GLP-1
 
 ```bash
 # Clone
-git clone https://github.com/lclesemann/pharma-launch-forecast.git
+git clone https://github.com/leelesemann-sys/pharma-launch-forecast.git
 cd pharma-launch-forecast
 
 # Install dependencies
