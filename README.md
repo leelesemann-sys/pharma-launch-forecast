@@ -1,10 +1,10 @@
 # Pharma Launch Forecast
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://pharma-launch-forecast.streamlit.app/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://pharma-launch-forecasts.streamlit.app/)
 
 Interactive forecast models for pharmaceutical product launches in Germany. Built with Python, Streamlit, and Plotly.
 
-> **Live Demo:** [pharma-launch-forecast.streamlit.app](https://pharma-launch-forecast.streamlit.app/)
+> **Live Demo:** [pharma-launch-forecasts.streamlit.app](https://pharma-launch-forecasts.streamlit.app/)
 
 Three fundamentally different forecasting engines demonstrate the breadth of launch scenarios a Strategic Portfolio Manager faces:
 
