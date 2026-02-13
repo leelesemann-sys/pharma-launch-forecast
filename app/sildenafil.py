@@ -91,6 +91,35 @@ def show():
             "Konservativ (SVA-Auflagen)"
         ], key="sil_scenario")
 
+        # ─── Scenario-driven slider defaults ──────────────────────
+        # The scenario sets the DEFAULT values for sliders.  When the user
+        # switches scenario the sliders jump to the new defaults.  The user
+        # can still fine-tune every slider afterwards.
+        # We detect scenario changes and clear cached slider values so the
+        # new defaults actually take effect (Streamlit ignores `value=` when
+        # a key already exists in session_state).
+        if scenario == "Optimistisch (BMG erzwingt Switch)":
+            _d = dict(otc_peak=450_000, otc_ramp=12, mktg=750_000,
+                      new_patient=70, rx_decline=5, brand_share=50)
+        elif scenario == "Konservativ (SVA-Auflagen)":
+            _d = dict(otc_peak=200_000, otc_ramp=24, mktg=300_000,
+                      new_patient=55, rx_decline=12, brand_share=35)
+        else:  # Base Case
+            _d = dict(otc_peak=350_000, otc_ramp=18, mktg=500_000,
+                      new_patient=63, rx_decline=8, brand_share=45)
+
+        # Reset scenario-dependent slider keys when scenario changes.
+        # We pop the cached values and rerun so Streamlit picks up the
+        # new defaults on the NEXT pass (pop + widget in same pass = ignored).
+        _prev = st.session_state.get("_sil_prev_scenario")
+        if _prev is not None and _prev != scenario:
+            for _k in ["sil_rx_dec", "sil_otc_peak", "sil_otc_ramp",
+                        "sil_np", "sil_brand", "sil_mktg"]:
+                st.session_state.pop(_k, None)
+            st.session_state["_sil_prev_scenario"] = scenario
+            st.rerun()
+        st.session_state["_sil_prev_scenario"] = scenario
+
         st.markdown("---")
 
         with st.expander("Rx-Markt", expanded=False):
@@ -98,13 +127,13 @@ def show():
             rx_price_brand = st.number_input("Viagra Preis/Tabl. (EUR)", 5.0, 25.0, 11.19, 0.5, key="sil_rx_brand")
             rx_price_generic = st.number_input("Generika Preis/Tabl. (EUR)", 0.50, 5.0, 1.50, 0.1, key="sil_rx_gen")
             rx_brand_share = st.slider("Viagra Markenanteil Rx (%)", 2, 25, 10, key="sil_rx_bs") / 100
-            rx_decline = st.slider("Rx-Rueckgang durch OTC (%)", 0, 30, 8, key="sil_rx_dec") / 100
+            rx_decline = st.slider("Rx-Rueckgang durch OTC (%)", 0, 30, _d["rx_decline"], key="sil_rx_dec") / 100
 
         with st.expander("OTC-Kanal", expanded=False):
             otc_price = st.number_input("OTC Preis/Tablette (EUR)", 2.0, 15.0, 5.99, 0.5, key="sil_otc_p")
-            otc_peak = st.number_input("OTC Peak Pack./Mon.", 100_000, 800_000, 350_000, 10_000, key="sil_otc_peak")
-            otc_ramp = st.slider("Monate bis Peak", 6, 36, 18, key="sil_otc_ramp")
-            new_patient = st.slider("Neue Patienten (% OTC-Vol.)", 30, 80, 63, key="sil_np") / 100
+            otc_peak = st.number_input("OTC Peak Pack./Mon.", 100_000, 800_000, _d["otc_peak"], 10_000, key="sil_otc_peak")
+            otc_ramp = st.slider("Monate bis Peak", 6, 36, _d["otc_ramp"], key="sil_otc_ramp")
+            new_patient = st.slider("Neue Patienten (% OTC-Vol.)", 30, 80, _d["new_patient"], key="sil_np") / 100
 
         with st.expander("Omnichannel-Verteilung", expanded=False):
             st.caption("Verteilung des OTC-Volumens auf Kanaele")
@@ -115,12 +144,12 @@ def show():
             online_growth = st.slider("Online-Wachstum p.a. (Pp.)", 0, 10, 4, key="sil_og") / 100
 
         with st.expander("Marke vs. Generika OTC", expanded=False):
-            brand_share = st.slider("Viagra Connect Anteil OTC (%)", 15, 70, 45, key="sil_brand") / 100
+            brand_share = st.slider("Viagra Connect Anteil OTC (%)", 15, 70, _d["brand_share"], key="sil_brand") / 100
             brand_erosion = st.slider("Markenanteil-Erosion p.a. (Pp.)", 0, 10, 3, key="sil_berosion") / 100
             brand_premium = st.slider("Preispremium Marke (x)", 1.0, 3.0, 1.8, 0.1, key="sil_bprem")
 
         with st.expander("Marketing & Awareness", expanded=False):
-            mktg = st.number_input("Marketing/Mon. (EUR)", 100_000, 2_000_000, 500_000, 50_000, key="sil_mktg")
+            mktg = st.number_input("Marketing/Mon. (EUR)", 100_000, 2_000_000, _d["mktg"], 50_000, key="sil_mktg")
             aw_peak = st.slider("Peak Awareness (%)", 50, 95, 75, key="sil_awp") / 100
             aw_base = st.slider("Baseline Awareness (%)", 20, 70, 60, key="sil_awb") / 100
             aw_ramp = st.slider("Awareness Ramp (Mon.)", 3, 18, 9, key="sil_awr")
@@ -135,9 +164,8 @@ def show():
             tada_switch = st.slider("Migration zu Sildenafil OTC (%)", 0, 30, 12, key="sil_tadas") / 100
 
     # ─── Build params ──────────────────────────────────────────────
-    # NOTE: Scenarios DON'T override slider-based values.
-    # All slider values always come directly from the sidebar.
-    # Scenarios only set the dropdown label (informational).
+    # Scenario sets slider defaults; all values come from sliders.
+    # User can fine-tune after selecting a scenario.
 
     channels = [
         ChannelParams(name="Stationaere Apotheke", share_of_otc=ch_apo / 100,
