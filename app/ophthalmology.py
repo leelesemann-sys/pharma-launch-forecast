@@ -58,6 +58,29 @@ def show():
         }
         div[data-testid="stSidebar"] .stMarkdown p { font-size: 13px; }
         div[data-testid="stSidebar"] label { font-size: 13px !important; }
+
+        /* Tab styling – visible background + border */
+        .stTabs [data-baseweb="tab-list"] {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            gap: 2px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            color: #64748b;
+        }
+        .stTabs [aria-selected="true"] {
+            background: #ffffff !important;
+            border: 1px solid #e5e7eb !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            color: #0f172a !important;
+            font-weight: 600;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -244,7 +267,7 @@ def show():
     # ═══════════════════════════════════════════════════════════════════
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Portfolio-Umsatz", "Produkt-Detail", "Aussendienst & GTM",
-        "AMNOG-Pricing", "Facharzt-Adoption"
+        "Facharzt-Adoption", "AMNOG-Pricing"
     ])
 
     # ─── Tab 1: Portfolio Revenue ─────────────────────────────────
@@ -410,38 +433,8 @@ def show():
         )
         st.plotly_chart(fig3c, width="stretch")
 
-    # ─── Tab 4: AMNOG Pricing ─────────────────────────────────────
+    # ─── Tab 4: Facharzt Adoption ─────────────────────────────────
     with tab4:
-        fig4 = go.Figure()
-        for p in products:
-            fig4.add_trace(go.Scatter(
-                x=df["month"], y=df[f"{p.code}_price"],
-                name=names[p.code], line=dict(color=colors[p.code], width=2.5),
-            ))
-            # AMNOG marker
-            if p.amnog_month > 0 and p.amnog_month <= 84:
-                fig4.add_annotation(
-                    x=p.amnog_month, y=df.loc[df["month"] == min(p.amnog_month, 84)].iloc[0][f"{p.code}_price"] if len(df[df["month"] == min(p.amnog_month, 84)]) > 0 else 0,
-                    text=f"AMNOG {p.name}", showarrow=True, arrowhead=2,
-                    arrowcolor=AMBER, font=dict(size=10),
-                )
-        fig4.update_layout(
-            title="Preisentwicklung (AMNOG-Lebenszyklus)",
-            xaxis_title="Monate", yaxis_title="EUR/Monat bzw. EUR/Behandlung",
-            height=420,
-            legend=dict(orientation="h", yanchor="bottom", y=1.02),
-        )
-        st.plotly_chart(fig4, width="stretch")
-
-        st.info("""
-        **AMNOG-Pricing:** Jedes Produkt startet mit freier Preissetzung (Phase 1).
-        Nach 6 Monaten erfolgt die G-BA Nutzenbewertung (IQWiG-Gutachten).
-        Der verhandelte Erstattungsbetrag gilt ab Monat 7 und unterliegt
-        anschliessend einer jaehrlichen Erosion durch Wettbewerb und Generika.
-        """)
-
-    # ─── Tab 5: Facharzt Adoption ─────────────────────────────────
-    with tab5:
         col_e, col_f = st.columns(2)
         with col_e:
             fig5 = go.Figure()
@@ -488,6 +481,36 @@ def show():
             yaxis_tickformat=".0%", height=350,
         )
         st.plotly_chart(fig5c, width="stretch")
+
+    # ─── Tab 5: AMNOG Pricing ─────────────────────────────────────
+    with tab5:
+        fig4 = go.Figure()
+        for p in products:
+            fig4.add_trace(go.Scatter(
+                x=df["month"], y=df[f"{p.code}_price"],
+                name=names[p.code], line=dict(color=colors[p.code], width=2.5),
+            ))
+            # AMNOG marker
+            if p.amnog_month > 0 and p.amnog_month <= 84:
+                fig4.add_annotation(
+                    x=p.amnog_month, y=df.loc[df["month"] == min(p.amnog_month, 84)].iloc[0][f"{p.code}_price"] if len(df[df["month"] == min(p.amnog_month, 84)]) > 0 else 0,
+                    text=f"AMNOG {p.name}", showarrow=True, arrowhead=2,
+                    arrowcolor=AMBER, font=dict(size=10),
+                )
+        fig4.update_layout(
+            title="Preisentwicklung (AMNOG-Lebenszyklus)",
+            xaxis_title="Monate", yaxis_title="EUR/Monat bzw. EUR/Behandlung",
+            height=420,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+        )
+        st.plotly_chart(fig4, width="stretch")
+
+        st.info("""
+        **AMNOG-Pricing:** Jedes Produkt startet mit freier Preissetzung (Phase 1).
+        Nach 6 Monaten erfolgt die G-BA Nutzenbewertung (IQWiG-Gutachten).
+        Der verhandelte Erstattungsbetrag gilt ab Monat 7 und unterliegt
+        anschliessend einer jaehrlichen Erosion durch Wettbewerb und Generika.
+        """)
 
     # ═══════════════════════════════════════════════════════════════════
     # SCENARIO COMPARISON
