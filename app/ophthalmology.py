@@ -338,7 +338,8 @@ def show():
             with pc1:
                 st.metric("Peak Patienten/Mon.", f"{kpis.get(f'{p.code}_peak_patients', 0):,}")
             with pc2:
-                st.metric("Peak Umsatz/Mon.", f"EUR {kpis.get(f'{p.code}_peak_revenue_month', 0):,}")
+                _peak_rev = kpis.get(f'{p.code}_peak_revenue_month', 0)
+                st.metric("Peak Umsatz/Mon.", f"EUR {_peak_rev/1e6:.2f}M")
             with pc3:
                 st.metric("7J Umsatz", f"EUR {kpis.get(f'{p.code}_total_revenue', 0)/1e6:.0f}M")
 
