@@ -532,19 +532,26 @@ def show():
     st.markdown("### Szenario-Vergleich")
 
     scenarios_def = {
-        "Konservativ": {"t_launch": 60, "t_share": 0.12, "ff_peak": 35, "m_launch": 24},
-        "Base Case": {"t_launch": 42, "t_share": 0.20, "ff_peak": 45, "m_launch": 18},
-        "Aggressiv": {"t_launch": 30, "t_share": 0.25, "ff_peak": 60, "m_launch": 12},
+        "Konservativ": {"t_launch": 60, "t_share": 0.12, "ff_peak": 35, "m_launch": 24,
+                        "r_speed": 24, "m_speed": 30, "t_speed": 36, "r_share": 0.40},
+        "Base Case": {"t_launch": 42, "t_share": 0.20, "ff_peak": 45, "m_launch": 18,
+                      "r_speed": 18, "m_speed": 24, "t_speed": 30, "r_share": 0.50},
+        "Aggressiv": {"t_launch": 30, "t_share": 0.25, "ff_peak": 60, "m_launch": 12,
+                      "r_speed": 12, "m_speed": 18, "t_speed": 24, "r_share": 0.60},
     }
 
     comp_rows = []
     for sn, ov in scenarios_def.items():
         sp1 = default_ryzumvi()
+        sp1.peak_market_share = ov["r_share"]
+        sp1.adoption_speed = ov["r_speed"]
         sp2 = default_mr141()
         sp2.launch_month = ov["m_launch"]
+        sp2.adoption_speed = ov["m_speed"]
         sp3 = default_tyrvaya()
         sp3.launch_month = ov["t_launch"]
         sp3.peak_market_share = ov["t_share"]
+        sp3.adoption_speed = ov["t_speed"]
         sff = FieldForceParams(reps_peak=ov["ff_peak"])
         sdf = forecast_ophthalmology([sp1, sp2, sp3], sff, forecast_months=84)
         sk = calculate_kpis_ophthalmology(sdf, [sp1, sp2, sp3])
