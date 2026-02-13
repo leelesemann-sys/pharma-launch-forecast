@@ -178,7 +178,7 @@ def show():
     st.caption(f"Sequenzieller Markteintritt DE | Szenario: **{scenario}** | 3 Produkte, 7-Jahres-Horizont")
 
     # ═══════════════════════════════════════════════════════════════════
-    # KPI CARDS
+    # KPI CARDS – Row 1: Portfolio + Product Split
     # ═══════════════════════════════════════════════════════════════════
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -188,51 +188,51 @@ def show():
             <div class="kpi-sublabel">Alle 3 Produkte</div>
         </div>""", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"""<div class="kpi-card-green">
+        st.markdown(f"""<div class="kpi-card">
+            <div class="kpi-label">RYZUMVI (Mydriase)</div>
+            <div class="kpi-value">EUR {kpis.get('ryzumvi_total_revenue',0)/1e6:.0f}M / {kpis.get('ryzumvi_revenue_share',0):.0%}</div>
+            <div class="kpi-sublabel">ab Monat 1</div>
+        </div>""", unsafe_allow_html=True)
+    with c3:
+        st.markdown(f"""<div class="kpi-card">
+            <div class="kpi-label">MR-141 (Presbyopie)</div>
+            <div class="kpi-value">EUR {kpis.get('mr141_total_revenue',0)/1e6:.0f}M / {kpis.get('mr141_revenue_share',0):.0%}</div>
+            <div class="kpi-sublabel">ab Monat {products[1].launch_month}</div>
+        </div>""", unsafe_allow_html=True)
+    with c4:
+        st.markdown(f"""<div class="kpi-card">
+            <div class="kpi-label">Tyrvaya (DED)</div>
+            <div class="kpi-value">EUR {kpis.get('tyrvaya_total_revenue',0)/1e6:.0f}M / {kpis.get('tyrvaya_revenue_share',0):.0%}</div>
+            <div class="kpi-sublabel">ab Monat {products[2].launch_month}</div>
+        </div>""", unsafe_allow_html=True)
+
+    # KPI Row 2: Financial KPIs
+    c5, c6, c7, c8 = st.columns(4)
+    with c5:
+        st.markdown(f"""<div class="kpi-card">
             <div class="kpi-label">Portfolio-Gewinn 7J</div>
             <div class="kpi-value">EUR {kpis['total_7y_profit']/1e6:.0f}M</div>
             <div class="kpi-sublabel">nach GTM-Kosten</div>
         </div>""", unsafe_allow_html=True)
-    with c3:
-        be = kpis.get("breakeven_month")
-        be_text = f"Monat {be}" if be else "–"
-        st.markdown(f"""<div class="kpi-card-amber">
-            <div class="kpi-label">Break-Even</div>
-            <div class="kpi-value">{be_text}</div>
-            <div class="kpi-sublabel">Kum. Gewinn > 0</div>
-        </div>""", unsafe_allow_html=True)
-    with c4:
-        st.markdown(f"""<div class="kpi-card-purple">
-            <div class="kpi-label">ROI (7 Jahre)</div>
-            <div class="kpi-value">{kpis['final_roi']:.1f}x</div>
-            <div class="kpi-sublabel">Gewinn / GTM-Invest</div>
-        </div>""", unsafe_allow_html=True)
-
-    # KPI Row 2: per-product revenue share
-    c5, c6, c7, c8 = st.columns(4)
-    with c5:
-        st.markdown(f"""<div class="kpi-card-indigo">
+    with c6:
+        st.markdown(f"""<div class="kpi-card">
             <div class="kpi-label">GTM-Invest 7J</div>
             <div class="kpi-value">EUR {kpis['total_7y_gtm_cost']/1e6:.0f}M</div>
             <div class="kpi-sublabel">AD + MSL + Marketing</div>
         </div>""", unsafe_allow_html=True)
-    with c6:
-        st.markdown(f"""<div class="kpi-card-teal">
-            <div class="kpi-label">RYZUMVI</div>
-            <div class="kpi-value">{kpis.get('ryzumvi_revenue_share',0):.0%}</div>
-            <div class="kpi-sublabel">EUR {kpis.get('ryzumvi_total_revenue',0)/1e6:.0f}M Umsatz</div>
-        </div>""", unsafe_allow_html=True)
     with c7:
+        be = kpis.get("breakeven_month")
+        be_text = f"Monat {be}" if be else "–"
         st.markdown(f"""<div class="kpi-card">
-            <div class="kpi-label">MR-141</div>
-            <div class="kpi-value">{kpis.get('mr141_revenue_share',0):.0%}</div>
-            <div class="kpi-sublabel">EUR {kpis.get('mr141_total_revenue',0)/1e6:.0f}M Umsatz</div>
+            <div class="kpi-label">Break-Even</div>
+            <div class="kpi-value">{be_text}</div>
+            <div class="kpi-sublabel">Kum. Gewinn > 0</div>
         </div>""", unsafe_allow_html=True)
     with c8:
-        st.markdown(f"""<div class="kpi-card-amber">
-            <div class="kpi-label">Tyrvaya</div>
-            <div class="kpi-value">{kpis.get('tyrvaya_revenue_share',0):.0%}</div>
-            <div class="kpi-sublabel">EUR {kpis.get('tyrvaya_total_revenue',0)/1e6:.0f}M Umsatz</div>
+        st.markdown(f"""<div class="kpi-card">
+            <div class="kpi-label">ROI (7 Jahre)</div>
+            <div class="kpi-value">{kpis['final_roi']:.1f}x</div>
+            <div class="kpi-sublabel">Gewinn / GTM-Invest</div>
         </div>""", unsafe_allow_html=True)
 
     # ═══════════════════════════════════════════════════════════════════
