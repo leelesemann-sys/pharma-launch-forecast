@@ -1,7 +1,7 @@
 """
 Pharma Launch Forecast – Multi-Page Application
 ================================================
-Three use cases accessible via sidebar navigation.
+Four use cases accessible via sidebar navigation.
 """
 
 import sys
@@ -21,15 +21,17 @@ st.set_page_config(
 from main import show as eliquis_show
 from glp1 import show as glp1_show
 from rx_otc import show as rx_otc_show
+from sildenafil import show as sildenafil_show
 
 # ─── Pages ──────────────────────────────────────────────────────────────
 eliquis_page = st.Page(eliquis_show, title="Eliquis Generic Entry", icon="\U0001f4c9", url_path="eliquis", default=True)
 glp1_page = st.Page(glp1_show, title="GLP-1 Brand Competition", icon="\U0001f489", url_path="glp1")
-rx_otc_page = st.Page(rx_otc_show, title="Rx-to-OTC Switch", icon="\U0001f6d2", url_path="rx-otc")
+rx_otc_page = st.Page(rx_otc_show, title="Rx-to-OTC Switch (PPI)", icon="\U0001f6d2", url_path="rx-otc")
+sildenafil_page = st.Page(sildenafil_show, title="Sildenafil OTC Switch", icon="\U0001f48a", url_path="sildenafil")
 
 nav = st.navigation(
     {
-        "Launch Forecasts": [eliquis_page, glp1_page, rx_otc_page],
+        "Launch Forecasts": [eliquis_page, glp1_page, rx_otc_page, sildenafil_page],
     }
 )
 nav.run()

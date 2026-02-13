@@ -6,16 +6,16 @@ Interactive forecast models for pharmaceutical product launches in Germany. Buil
 
 > **Live Demo:** [pharma-launch-forecasts.streamlit.app](https://pharma-launch-forecasts.streamlit.app/)
 
-Three fundamentally different forecasting engines demonstrate the breadth of launch scenarios a Strategic Portfolio Manager faces:
+Four forecasting engines demonstrate the breadth of launch scenarios a Strategic Portfolio Manager faces:
 
-| | Use Case 1 | Use Case 2 | Use Case 3 |
-|---|---|---|---|
-| **Scenario** | Eliquis Generic Entry | GLP-1: Mounjaro vs. Ozempic | Rx-to-OTC Switch (PPI) |
-| **Type** | Generic vs. Originator | Brand vs. Brand | Dual Channel (Rx + OTC) |
-| **Market** | Mature, eroding | Expanding, high-growth | Channel transition |
-| **Key Mechanic** | Aut-idem, Rabattvertraege | Indication layering, supply | Consumer awareness, pricing |
-| **LOE** | May 2026 | n/a (patent protected) | n/a (OTC switch) |
-| **Pricing** | Festbetrag / generic erosion | AMNOG Erstattungsbetrag | Free OTC pricing, pharmacy margin |
+| | Use Case 1 | Use Case 2 | Use Case 3 | Use Case 4 |
+|---|---|---|---|---|
+| **Scenario** | Eliquis Generic Entry | GLP-1: Mounjaro vs. Ozempic | Rx-to-OTC Switch (PPI) | Sildenafil OTC Switch |
+| **Type** | Generic vs. Originator | Brand vs. Brand | Dual Channel (Rx + OTC) | Omnichannel + Disruption |
+| **Market** | Mature, eroding | Expanding, high-growth | Channel transition | Stigma-driven, underserved |
+| **Key Mechanic** | Aut-idem, Rabattvertraege | Indication layering, supply | Consumer awareness, pricing | Omnichannel, telemed. disruption |
+| **LOE** | May 2026 | n/a (patent protected) | n/a (OTC switch) | n/a (BfArM SVA pending) |
+| **Pricing** | Festbetrag / generic erosion | AMNOG Erstattungsbetrag | Free OTC pricing | Brand vs. generic OTC |
 
 ## Screenshots
 
@@ -28,12 +28,14 @@ pharma-launch-forecast/
 ├── models/
 │   ├── forecast_engine.py           # Generic Entry engine (Eliquis)
 │   ├── brand_competition_engine.py  # Brand Competition engine (GLP-1)
-│   └── rx_otc_engine.py             # Rx-to-OTC Switch engine (PPI)
+│   ├── rx_otc_engine.py             # Rx-to-OTC Switch engine (PPI)
+│   └── sildenafil_otc_engine.py     # Sildenafil OTC engine (Omnichannel)
 ├── app/
 │   ├── app.py                       # Multi-page entry point (st.navigation)
 │   ├── main.py                      # Page: Eliquis Generic Entry
 │   ├── glp1.py                      # Page: GLP-1 Brand Competition
-│   └── rx_otc.py                    # Page: Rx-to-OTC Switch
+│   ├── rx_otc.py                    # Page: Rx-to-OTC Switch (PPI)
+│   └── sildenafil.py                # Page: Sildenafil OTC Switch
 ├── data/
 │   ├── market_data.py               # NOAK/DOAK market data (synthetic)
 │   └── glp1_market_data.py          # GLP-1 market data (synthetic)
@@ -41,9 +43,11 @@ pharma-launch-forecast/
 │   ├── build_excel_model.py                    # Excel generator: Eliquis
 │   ├── build_glp1_excel.py                     # Excel generator: GLP-1
 │   ├── build_rx_otc_excel.py                   # Excel generator: Rx-to-OTC
+│   ├── build_sildenafil_excel.py               # Excel generator: Sildenafil
 │   ├── Eliquis_Launch_Forecast_v2.xlsx         # Pre-built Excel (6 sheets)
 │   ├── GLP1_Brand_Competition_Forecast.xlsx    # Pre-built Excel (6 sheets)
-│   └── RxToOTC_Switch_Forecast.xlsx            # Pre-built Excel (5 sheets)
+│   ├── RxToOTC_Switch_Forecast.xlsx            # Pre-built Excel (5 sheets)
+│   └── Sildenafil_OTC_Switch_Forecast.xlsx     # Pre-built Excel (6 sheets)
 └── requirements.txt
 ```
 
@@ -118,6 +122,36 @@ Two perspectives:
 - Antacid cannibalization: -EUR 11M; H2-antagonists: -46%
 - OTC PPI max 14 tablets/20mg per BfArM
 
+## Use Case 4: Sildenafil Rx-to-OTC Switch (Viatris/Viagra)
+
+**Question:** What is the commercial opportunity if Sildenafil becomes OTC in Germany?
+
+Builds on Use Case 3 but adds omnichannel distribution modeling and telemedizin disruption analysis. Reference: UK Viagra Connect (OTC since March 2018).
+
+**What makes this model unique:**
+- **Omnichannel modeling:** Three distribution channels (stationaere Apotheke, Online-Apotheke, Drogerie) with time-dependent share evolution and channel-specific margins
+- **Discretion factor:** Channels with higher anonymity (online) get volume bonus reflecting ED stigma barrier
+- **Telemedizin disruption:** Models revenue collapse of Zava/GoSpring/TeleClinic as OTC removes need for Rx
+- **Brand vs. generic OTC:** Viagra Connect market share erosion as generic OTC sildenafil enters
+- **Treatment gap closure:** Models how OTC access brings previously untreated men into therapy
+- **Tadalafil migration:** Some Cialis/Tadalafil Rx patients switch to convenient OTC sildenafil
+
+**Key model features:**
+- Dual-channel Rx/OTC with minimal Rx cannibalization (UK: Rx actually increased post-switch)
+- Three omnichannel distribution paths with margin structures
+- Telemedizin disruption curve with pivot retention
+- Brand erosion modeling (Viagra Connect vs. generic OTC)
+- Patient already pays 100% Rx (not GKV-covered) → low price friction for OTC switch
+- Three scenarios: Konservativ (SVA-Auflagen) / Base Case / Optimistisch (BMG erzwingt Switch)
+
+**Real-world data points incorporated:**
+- 4-6M men with ED in Germany, only 33% treated (Cologne Male Survey, Viatris 2023)
+- UK Viagra Connect: 63% new-to-therapy patients (Lee et al. 2021, n=1,162)
+- BfArM SVA rejected OTC switch 3x (2022, 2023, 2025) but BMG publicly supports it
+- Generic Rx: EUR 0.95-2.30/tablet; Viagra brand: EUR 8-14/tablet
+- Online pharmacy CAGR 12.6% (OTC segment, Grand View Research)
+- Telemedizin platforms: Zava (2M patients), GoSpring (80% chose Sildenafil)
+
 ## Excel Models
 
 Pre-built Excel workbooks are included in [`exports/`](exports/) for direct download. Each has professionally formatted sheets:
@@ -132,14 +166,16 @@ Pre-built Excel workbooks are included in [`exports/`](exports/) for direct down
 |---|---|---|
 | [`Eliquis_Launch_Forecast_v2.xlsx`](exports/Eliquis_Launch_Forecast_v2.xlsx) | Generic Entry | 6 |
 | [`GLP1_Brand_Competition_Forecast.xlsx`](exports/GLP1_Brand_Competition_Forecast.xlsx) | Brand Competition | 6 |
-| [`RxToOTC_Switch_Forecast.xlsx`](exports/RxToOTC_Switch_Forecast.xlsx) | Rx-to-OTC Switch | 5 |
+| [`RxToOTC_Switch_Forecast.xlsx`](exports/RxToOTC_Switch_Forecast.xlsx) | Rx-to-OTC Switch (PPI) | 5 |
+| [`Sildenafil_OTC_Switch_Forecast.xlsx`](exports/Sildenafil_OTC_Switch_Forecast.xlsx) | Sildenafil OTC (Omnichannel) | 6 |
 
 Regenerate them after modifying parameters:
 
 ```bash
-python exports/build_excel_model.py      # Eliquis
-python exports/build_glp1_excel.py       # GLP-1
-python exports/build_rx_otc_excel.py     # Rx-to-OTC
+python exports/build_excel_model.py         # Eliquis
+python exports/build_glp1_excel.py          # GLP-1
+python exports/build_rx_otc_excel.py        # Rx-to-OTC (PPI)
+python exports/build_sildenafil_excel.py    # Sildenafil OTC
 ```
 
 ## Getting Started
@@ -152,7 +188,7 @@ cd pharma-launch-forecast
 # Install dependencies
 pip install -r requirements.txt
 
-# Run multi-page app (all 3 use cases)
+# Run multi-page app (all 4 use cases)
 streamlit run app/app.py
 ```
 
@@ -165,6 +201,10 @@ All data is synthetic and based on publicly available sources:
 - IQVIA Pharmamarkt Deutschland (public summaries)
 - EMA European Public Assessment Reports
 - GKV-Arzneimittelindex, Lauer-Taxe (public pricing)
+- BfArM Sachverstaendigenausschuss protocols (Sildenafil OTC decisions)
+- MHRA / PAGB Frontier Economics (UK Viagra Connect impact)
+- PMC Lee et al. 2021 (UK real-world study, n=1,162)
+- Cologne Male Survey (Braun et al., Nature)
 
 No proprietary IQVIA data, no confidential company data. The models are designed to demonstrate forecasting methodology, not to provide investment advice.
 
