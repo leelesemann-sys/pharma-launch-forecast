@@ -47,6 +47,7 @@ class ProductParams:
 
     # ─── Target population ──────────────────────────────────────
     eligible_patients: int = 100_000       # patients who could use this product
+    market_growth_annual: float = 0.02     # annual growth of eligible population (e.g. 2%)
     current_treatment_rate: float = 0.50   # % currently treated (for this indication)
     addressable_pct: float = 0.30          # % of eligible we can realistically reach
 
@@ -178,6 +179,7 @@ def default_ryzumvi() -> ProductParams:
         compliance_rate=1.0,            # administered by physician
         cogs_pct=0.20,
         royalty_pct=0.08,               # Ocuphire royalty
+        market_growth_annual=0.02,      # ophthalmology procedures grow ~2% p.a.
         competitors=0,
         competitive_pressure_annual=0.0,
     )
@@ -205,6 +207,7 @@ def default_mr141() -> ProductParams:
         compliance_rate=0.60,           # lifestyle → lower compliance
         cogs_pct=0.15,
         royalty_pct=0.05,
+        market_growth_annual=0.03,      # presbyopia prevalence growing ~3% (aging population)
         competitors=1,                  # Vuity (AbbVie) or similar
         competitive_pressure_annual=-0.03,
     )
@@ -232,6 +235,7 @@ def default_tyrvaya() -> ProductParams:
         compliance_rate=0.65,
         cogs_pct=0.18,
         royalty_pct=0.0,                # fully owned (Oyster Point)
+        market_growth_annual=0.057,     # dry eye market CAGR 5.7%
         competitors=3,                  # iKervis, Vevizye, generics
         competitive_pressure_annual=-0.03,
     )
@@ -400,11 +404,13 @@ def forecast_ophthalmology(
             effective_share = base_share * competitive_erosion
             row_data[f"{prefix}_share"] = effective_share
 
-            # Patient volume
-            treatable = p.eligible_patients * p.addressable_pct
+            # Patient volume (eligible population grows annually)
+            years_into_model = (m - 1) / 12.0
+            eligible_now = p.eligible_patients * (1.0 + p.market_growth_annual) ** years_into_model
+            treatable = eligible_now * p.addressable_pct
             if p.current_treatment_rate > 0:
                 # Some patients already treated → compete for them
-                treated_pool = p.eligible_patients * p.current_treatment_rate * p.addressable_pct
+                treated_pool = eligible_now * p.current_treatment_rate * p.addressable_pct
             else:
                 treated_pool = treatable
             patients = treated_pool * effective_share * p.compliance_rate

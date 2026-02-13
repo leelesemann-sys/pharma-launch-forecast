@@ -80,6 +80,7 @@ def show():
         with st.expander("P1: RYZUMVI (Mydriase)", expanded=False):
             r_launch = st.number_input("Launch Monat", 1, 24, 1, key="r_lm")
             r_eligible = st.number_input("Elig. Prozeduren/Jahr", 200_000, 2_000_000, 800_000, 50_000, key="r_elig")
+            r_growth = st.slider("Marktwachstum /Jahr (%)", 0, 10, 2, key="r_growth") / 100
             r_addressable = st.slider("Adressierbar (%)", 5, 50, 25, key="r_addr") / 100
             r_share = st.slider("Peak Marktanteil (%)", 10, 80, 50, key="r_share") / 100
             r_speed = st.slider("Adoption (Mon. bis halber Peak MA)", 6, 36, 18, key="r_speed")
@@ -90,6 +91,7 @@ def show():
         with st.expander("P2: MR-141 (Presbyopie)", expanded=False):
             m_launch = st.number_input("Launch Monat", 6, 48, 18, key="m_lm")
             m_eligible = st.number_input("Elig. Patienten", 5_000_000, 25_000_000, 15_000_000, 1_000_000, key="m_elig")
+            m_growth = st.slider("Marktwachstum /Jahr (%)", 0, 10, 3, key="m_growth") / 100
             m_addressable = st.slider("Adressierbar (%)", 1, 10, 2, key="m_addr") / 100
             m_compliance = st.slider("Compliance (%)", 30, 90, 60, key="m_comp") / 100
             m_share = st.slider("Peak Marktanteil (%)", 10, 60, 40, key="m_share") / 100
@@ -101,13 +103,13 @@ def show():
         with st.expander("P3: Tyrvaya (Trockenes Auge)", expanded=False):
             t_launch = st.number_input("Launch Monat", 24, 72, 42, key="t_lm")
             t_eligible = st.number_input("Diagn. DED-Patienten", 500_000, 3_000_000, 1_700_000, 100_000, key="t_elig")
+            t_growth = st.slider("Marktwachstum /Jahr (%)", 0, 15, 6, key="t_growth") / 100
             t_addressable = st.slider("Adressierbar (%)", 3, 30, 12, key="t_addr") / 100
             t_compliance = st.slider("Compliance (%)", 40, 85, 65, key="t_comp") / 100
             t_share = st.slider("Peak Marktanteil (%)", 5, 40, 20, key="t_share") / 100
             t_speed = st.slider("Adoption (Mon. bis halber Peak MA)", 18, 48, 30, key="t_speed")
             t_price = st.number_input("Preis/Monat (EUR)", 80.0, 250.0, 140.0, 10.0, key="t_price")
             t_amnog_cut = st.slider("AMNOG-Preisabschlag (%)", 5, 40, 15, key="t_amnog") / 100
-            t_competitors = st.number_input("Wettbewerber", 1, 6, 3, key="t_comp_n")
 
         # ─── Field Force ────────────────────────────────────────
         with st.expander("Aussendienst & GTM", expanded=False):
@@ -131,6 +133,7 @@ def show():
     p1 = default_ryzumvi()
     p1.launch_month = r_launch
     p1.eligible_patients = r_eligible
+    p1.market_growth_annual = r_growth
     p1.addressable_pct = r_addressable
     p1.peak_market_share = r_share
     p1.launch_price_monthly = r_price
@@ -140,6 +143,7 @@ def show():
     p2 = default_mr141()
     p2.launch_month = m_launch
     p2.eligible_patients = m_eligible
+    p2.market_growth_annual = m_growth
     p2.addressable_pct = m_addressable
     p2.peak_market_share = m_share
     p2.launch_price_monthly = m_price
@@ -150,13 +154,13 @@ def show():
     p3 = default_tyrvaya()
     p3.launch_month = t_launch
     p3.eligible_patients = t_eligible
+    p3.market_growth_annual = t_growth
     p3.addressable_pct = t_addressable
     p3.peak_market_share = t_share
     p3.launch_price_monthly = t_price
     p3.amnog_price_cut_pct = t_amnog_cut
     p3.adoption_speed = t_speed
     p3.compliance_rate = t_compliance
-    p3.competitors = t_competitors
 
     products = [p1, p2, p3]
 
