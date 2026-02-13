@@ -261,7 +261,7 @@ def show():
         fig1.update_layout(
             title="Portfolio-Umsatz nach Produkt (monatlich)",
             xaxis_title="Monate", yaxis_title="EUR",
-            height=420, legend=dict(orientation="h", yanchor="bottom", y=1.02),
+            height=420, legend=dict(orientation="h", yanchor="bottom", y=1.02, traceorder="reversed"),
         )
         st.plotly_chart(fig1, width="stretch")
 
