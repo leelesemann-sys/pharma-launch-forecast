@@ -264,15 +264,14 @@ def show():
         </div>""", unsafe_allow_html=True)
 
     # ─── Helper: staggered launch markers ────────────────────────
-    def _add_launch_markers(fig, products_list, y_shifts=None):
-        """Add launch vlines with staggered labels so they don't overlap."""
-        if y_shifts is None:
-            y_shifts = [1.02, 1.09, 1.16]  # stagger vertically in paper coords
+    def _add_launch_markers(fig, products_list):
+        """Add launch vlines with staggered labels inside the plot area."""
+        y_positions = [0.95, 0.88, 0.81]  # inside chart, staggered top-down
         for i, p in enumerate(products_list):
             fig.add_vline(x=p.launch_month, line_dash="dot", line_color="#ccc")
             fig.add_annotation(
-                x=p.launch_month, y=y_shifts[i % len(y_shifts)],
-                yref="paper", text=f"{p.name} Launch",
+                x=p.launch_month, y=y_positions[i % len(y_positions)],
+                yref="paper", text=f"▾ {p.name}",
                 showarrow=False, font=dict(size=9, color="#94a3b8"),
             )
 
@@ -300,8 +299,8 @@ def show():
         fig1.update_layout(
             title="Portfolio-Umsatz nach Produkt (monatlich)",
             xaxis_title="Monate", yaxis_title="EUR",
-            height=420, margin=dict(t=80),
-            legend=dict(orientation="h", yanchor="bottom", y=1.18, traceorder="reversed"),
+            height=420,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, traceorder="reversed"),
         )
         st.plotly_chart(fig1, width="stretch")
 
@@ -398,8 +397,8 @@ def show():
             _add_launch_markers(fig3, products)
             fig3.update_layout(
                 title="Aussendienst-Aufbau", xaxis_title="Monate",
-                yaxis_title="Anzahl", height=380, margin=dict(t=80),
-                legend=dict(orientation="h", yanchor="bottom", y=1.18),
+                yaxis_title="Anzahl", height=380,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02),
             )
             st.plotly_chart(fig3, width="stretch")
 
@@ -428,8 +427,8 @@ def show():
             _add_launch_markers(fig3b, products)
             fig3b.update_layout(
                 title="GTM-Kosten nach Kategorie", xaxis_title="Monate",
-                yaxis_title="EUR/Monat", height=380, margin=dict(t=80),
-                legend=dict(orientation="h", yanchor="bottom", y=1.18),
+                yaxis_title="EUR/Monat", height=380,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02),
             )
             st.plotly_chart(fig3b, width="stretch")
 
@@ -446,7 +445,7 @@ def show():
         _add_launch_markers(fig3c, products)
         fig3c.update_layout(
             title="Effizienz: Umsatz pro Sales Rep/Monat",
-            xaxis_title="Monate", yaxis_title="EUR/Rep/Monat", height=350, margin=dict(t=80),
+            xaxis_title="Monate", yaxis_title="EUR/Rep/Monat", height=350,
         )
         st.plotly_chart(fig3c, width="stretch")
 
