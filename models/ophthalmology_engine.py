@@ -11,7 +11,6 @@ What makes this model unique:
   - Field force scaling: Aussendienst + MSL build-up tied to launch sequence
   - Competitive dynamics: iKervis, Vevizye, OTC artificial tears
   - Cross-product synergies: shared field force, KOL relationships
-  - MVZ channel: growing consolidated practice channel
 
 Product Portfolio:
   P1: RYZUMVI (phentolamine) – Mydriasis reversal   [near-term, 2026]
@@ -24,7 +23,6 @@ Market data (Germany):
   - Dry eye market DE: ~EUR 430M (Rx+OTC), CAGR 5.7%
   - iKervis (Santen): EUR 120-135/month, severe keratitis only
   - Vevizye (Novaliq/Thea): EU-approved Oct 2024, moderate-to-severe
-  - MVZ share growing: ~2,250 ophthalmologists in MVZ (2024)
 """
 
 from dataclasses import dataclass, field
@@ -134,8 +132,6 @@ class MarketParams:
     """German ophthalmology market parameters."""
     total_ophthalmologists: int = 8_250
     gkv_ophthalmologists: int = 6_600
-    mvz_ophthalmologists: int = 2_250
-    mvz_growth_annual: float = 0.08        # MVZ share growing 8% p.a.
 
     # Dry eye market
     dry_eye_patients_diagnosed: int = 1_700_000
@@ -390,11 +386,6 @@ def forecast_ophthalmology(
                                        "marketing", "congress_kol", "digital", "total_gtm_cost"]}
 
         row_data.update({f"ff_{k}": v for k, v in ff_data.items()})
-
-        # ─── MVZ evolution ──────────────────────────────────────
-        mvz_count = market.mvz_ophthalmologists * (1 + market.mvz_growth_annual) ** (m / 12)
-        row_data["mvz_ophthalmologists"] = round(mvz_count)
-        row_data["mvz_share"] = mvz_count / market.total_ophthalmologists
 
         # ─── Per-product metrics ────────────────────────────────
         total_revenue = 0.0

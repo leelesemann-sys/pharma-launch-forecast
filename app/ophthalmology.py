@@ -481,20 +481,6 @@ def show():
             )
             st.plotly_chart(fig5b, width="stretch")
 
-        # MVZ growth
-        fig5c = go.Figure()
-        fig5c.add_trace(go.Scatter(
-            x=df["month"], y=df["mvz_share"],
-            name="MVZ-Anteil", line=dict(color=INDIGO, width=2.5),
-            fill="tozeroy", fillcolor="rgba(79,70,229,0.1)",
-        ))
-        fig5c.update_layout(
-            title="MVZ-Anteil an Augenaerzten (wachsend)",
-            xaxis_title="Monate", yaxis_title="Anteil",
-            yaxis_tickformat=".0%", height=350,
-        )
-        st.plotly_chart(fig5c, width="stretch")
-
     # ─── Tab 5: AMNOG Pricing ─────────────────────────────────────
     with tab5:
         fig4 = go.Figure()
@@ -581,7 +567,6 @@ def show():
         | AMNOG-Pricing | 3-Phasen: Frei → G-BA → Erosion | IQWiG / GKV-SV Verfahren |
         | Field Force | Lineare Skalierung + Synergie | Branchenbenchmarks (1 Rep:100-200 Aerzte) |
         | Cross-Product Synergy | P2: 70%, P3: 60% der Standalone-Kosten | Portfolio-Effekte |
-        | MVZ-Wachstum | 8% p.a. Konsolidierung | Gesundheitsmarkt.de Daten |
         | Wettbewerb | Jaehrl. Share-Erosion pro Produkt | iKervis, Vevizye, Vuity |
 
         **Datenquellen (alle oeffentlich):**
