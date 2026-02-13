@@ -82,9 +82,9 @@ def show():
             r_eligible = st.number_input("Elig. Prozeduren/Jahr", 200_000, 2_000_000, 800_000, 50_000, key="r_elig")
             r_addressable = st.slider("Adressierbar (%)", 5, 50, 25, key="r_addr") / 100
             r_share = st.slider("Peak Marktanteil (%)", 10, 80, 50, key="r_share") / 100
+            r_speed = st.slider("Adoption (Mon. bis halber Peak MA)", 6, 36, 18, key="r_speed")
             r_price = st.number_input("Preis/Behandlung (EUR)", 10.0, 60.0, 25.0, 1.0, key="r_price")
             r_amnog_cut = st.slider("AMNOG-Preisabschlag (%)", 0, 40, 10, key="r_amnog") / 100
-            r_speed = st.slider("Adoptions-Speed (Mon.)", 6, 36, 18, key="r_speed")
 
         # ─── Product 2: MR-141 ──────────────────────────────────
         with st.expander("P2: MR-141 (Presbyopie)", expanded=False):
@@ -92,9 +92,9 @@ def show():
             m_eligible = st.number_input("Elig. Patienten", 5_000_000, 25_000_000, 15_000_000, 1_000_000, key="m_elig")
             m_addressable = st.slider("Adressierbar (%)", 1, 10, 2, key="m_addr") / 100
             m_share = st.slider("Peak Marktanteil (%)", 10, 60, 40, key="m_share") / 100
+            m_speed = st.slider("Adoption (Mon. bis halber Peak MA)", 12, 48, 24, key="m_speed")
             m_price = st.number_input("Preis/Monat (EUR)", 20.0, 100.0, 45.0, 5.0, key="m_price")
             m_amnog_cut = st.slider("AMNOG-Preisabschlag (%)", 5, 50, 25, key="m_amnog") / 100
-            m_speed = st.slider("Adoptions-Speed (Mon.)", 12, 48, 24, key="m_speed")
             m_compliance = st.slider("Compliance (%)", 30, 90, 60, key="m_comp") / 100
 
         # ─── Product 3: Tyrvaya ─────────────────────────────────
@@ -103,9 +103,9 @@ def show():
             t_eligible = st.number_input("Diagn. DED-Patienten", 500_000, 3_000_000, 1_700_000, 100_000, key="t_elig")
             t_addressable = st.slider("Adressierbar (%)", 3, 30, 12, key="t_addr") / 100
             t_share = st.slider("Peak Marktanteil (%)", 5, 40, 20, key="t_share") / 100
+            t_speed = st.slider("Adoption (Mon. bis halber Peak MA)", 18, 48, 30, key="t_speed")
             t_price = st.number_input("Preis/Monat (EUR)", 80.0, 250.0, 140.0, 10.0, key="t_price")
             t_amnog_cut = st.slider("AMNOG-Preisabschlag (%)", 5, 40, 15, key="t_amnog") / 100
-            t_speed = st.slider("Adoptions-Speed (Mon.)", 18, 48, 30, key="t_speed")
             t_compliance = st.slider("Compliance (%)", 40, 85, 65, key="t_comp") / 100
             t_competitors = st.number_input("Wettbewerber", 1, 6, 3, key="t_comp_n")
 
