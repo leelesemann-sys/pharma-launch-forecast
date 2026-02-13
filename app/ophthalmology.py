@@ -35,8 +35,8 @@ def show():
     st.markdown("""
     <style>
         /* Reduce Streamlit default top padding */
-        .block-container { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
-        h2 { margin-top: 0 !important; padding-top: 0 !important; margin-bottom: 0.3rem !important; }
+        .block-container { padding-top: 1.5rem !important; padding-bottom: 0.5rem !important; }
+        h2 { margin-top: 0 !important; margin-bottom: 0.2rem !important; }
 
         .kpi-card, .kpi-card-teal, .kpi-card-amber,
         .kpi-card-green, .kpi-card-purple, .kpi-card-indigo,
