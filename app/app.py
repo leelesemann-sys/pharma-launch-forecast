@@ -29,7 +29,7 @@ eliquis_page = st.Page(eliquis_show, title="Eliquis Generic Entry", icon="\U0001
 glp1_page = st.Page(glp1_show, title="GLP-1 Brand Competition", icon="\U0001f489", url_path="glp1")
 rx_otc_page = st.Page(rx_otc_show, title="Rx-to-OTC Switch (PPI)", icon="\U0001f6d2", url_path="rx-otc")
 sildenafil_page = st.Page(sildenafil_show, title="Sildenafil OTC Switch", icon="\U0001f48a", url_path="sildenafil")
-ophthalmology_page = st.Page(ophthalmology_show, title="Viatris EyeCare", icon="\U0001f441", url_path="eyecare")
+ophthalmology_page = st.Page(ophthalmology_show, title="Eye Care Franchise", icon="\U0001f441", url_path="eyecare")
 
 nav = st.navigation(
     {

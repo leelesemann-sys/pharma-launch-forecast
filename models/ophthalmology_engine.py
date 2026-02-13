@@ -1,6 +1,6 @@
 """
-Viatris EyeCare – Specialty Ophthalmology Portfolio Launch Engine
-=================================================================
+Eye Care Franchise – Specialty Ophthalmology Portfolio Launch Engine
+====================================================================
 Models sequential market entry of multiple specialty products into
 the German ophthalmology market over a 7-year horizon.
 

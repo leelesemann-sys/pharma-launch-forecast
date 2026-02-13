@@ -10,7 +10,7 @@ Five forecasting engines demonstrate the breadth of launch scenarios a Strategic
 
 | | Use Case 1 | Use Case 2 | Use Case 3 | Use Case 4 | Use Case 5 |
 |---|---|---|---|---|---|
-| **Scenario** | Eliquis Generic Entry | GLP-1: Mounjaro vs. Ozempic | Rx-to-OTC Switch (PPI) | Sildenafil OTC Switch | Viatris EyeCare Portfolio |
+| **Scenario** | Eliquis Generic Entry | GLP-1: Mounjaro vs. Ozempic | Rx-to-OTC Switch (PPI) | Sildenafil OTC Switch | Eye Care Franchise |
 | **Type** | Generic vs. Originator | Brand vs. Brand | Dual Channel (Rx + OTC) | Omnichannel + Disruption | Sequential Portfolio Launch |
 | **Market** | Mature, eroding | Expanding, high-growth | Channel transition | Stigma-driven, underserved | Specialty, fragmented |
 | **Key Mechanic** | Aut-idem, Rabattvertraege | Indication layering, supply | Consumer awareness, pricing | Omnichannel, telemed. disruption | AMNOG pricing, Facharzt adoption |
@@ -30,14 +30,14 @@ pharma-launch-forecast/
 │   ├── brand_competition_engine.py  # Brand Competition engine (GLP-1)
 │   ├── rx_otc_engine.py             # Rx-to-OTC Switch engine (PPI)
 │   ├── sildenafil_otc_engine.py     # Sildenafil OTC engine (Omnichannel)
-│   └── ophthalmology_engine.py     # Ophthalmology Portfolio engine (Viatris EyeCare)
+│   └── ophthalmology_engine.py     # Ophthalmology Portfolio engine (Eye Care Franchise)
 ├── app/
 │   ├── app.py                       # Multi-page entry point (st.navigation)
 │   ├── main.py                      # Page: Eliquis Generic Entry
 │   ├── glp1.py                      # Page: GLP-1 Brand Competition
 │   ├── rx_otc.py                    # Page: Rx-to-OTC Switch (PPI)
 │   ├── sildenafil.py                # Page: Sildenafil OTC Switch
-│   └── ophthalmology.py             # Page: Viatris EyeCare Portfolio
+│   └── ophthalmology.py             # Page: Eye Care Franchise
 ├── data/
 │   ├── market_data.py               # NOAK/DOAK market data (synthetic)
 │   └── glp1_market_data.py          # GLP-1 market data (synthetic)
@@ -156,11 +156,11 @@ Builds on Use Case 3 but adds omnichannel distribution modeling and telemedizin 
 - Online pharmacy CAGR 12.6% (OTC segment, Grand View Research)
 - Telemedizin platforms: Zava (2M patients), GoSpring (80% chose Sildenafil)
 
-## Use Case 5: Viatris EyeCare Ophthalmology Portfolio
+## Use Case 5: Eye Care Franchise – Ophthalmology Portfolio
 
-**Question:** How should Viatris sequence three specialty ophthalmology products into the German market?
+**Question:** How should a specialty pharma company sequence three ophthalmology products into the German market?
 
-Models sequential market entry with shared field force, AMNOG pricing lifecycle, and cross-product synergies. Based on Viatris's acquisitions of Oyster Point ($785M, 2023) and Famy Life Sciences (2023).
+Models sequential market entry with shared field force, AMNOG pricing lifecycle, and cross-product synergies. Based on real-world pipeline assets (Oyster Point, Famy Life Sciences acquisitions).
 
 **Product Portfolio:**
 
@@ -191,7 +191,7 @@ Models sequential market entry with shared field force, AMNOG pricing lifecycle,
 - iKervis (Santen): EUR 120-135/month, severe keratitis only
 - Vevizye (Novaliq/Thea): EU-approved Oct 2024, moderate-to-severe DED
 - RYZUMVI FDA-approved Aug 2023, Tyrvaya FDA-approved Oct 2021
-- Viatris $1B+ specialty revenue target by 2028 (Investor Day)
+- Public pipeline and investor relations data
 
 ## Excel Models
 
@@ -209,7 +209,7 @@ Pre-built Excel workbooks are included in [`exports/`](exports/) for direct down
 | [`GLP1_Brand_Competition_Forecast.xlsx`](exports/GLP1_Brand_Competition_Forecast.xlsx) | Brand Competition | 6 |
 | [`RxToOTC_Switch_Forecast.xlsx`](exports/RxToOTC_Switch_Forecast.xlsx) | Rx-to-OTC Switch (PPI) | 5 |
 | [`Sildenafil_OTC_Switch_Forecast.xlsx`](exports/Sildenafil_OTC_Switch_Forecast.xlsx) | Sildenafil OTC (Omnichannel) | 6 |
-| [`Ophthalmology_Portfolio_Forecast.xlsx`](exports/Ophthalmology_Portfolio_Forecast.xlsx) | Ophthalmology Portfolio (Viatris) | 6 |
+| [`Ophthalmology_Portfolio_Forecast.xlsx`](exports/Ophthalmology_Portfolio_Forecast.xlsx) | Eye Care Franchise | 6 |
 
 Regenerate them after modifying parameters:
 
@@ -248,7 +248,7 @@ All data is synthetic and based on publicly available sources:
 - MHRA / PAGB Frontier Economics (UK Viagra Connect impact)
 - PMC Lee et al. 2021 (UK real-world study, n=1,162)
 - Cologne Male Survey (Braun et al., Nature)
-- Viatris Investor Relations, Newsroom, Investor Day 2024
+- Public investor relations and pipeline disclosures
 - FDA/EMA European Public Assessment Reports (RYZUMVI, Tyrvaya, Vevizye)
 - KBV/BAeK Aerztestatistik 2024 (ophthalmology workforce)
 - Grand View Research (DE dry eye market)

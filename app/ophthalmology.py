@@ -1,5 +1,5 @@
 """
-Pharma Launch Forecast – Use Case 5: Viatris EyeCare Portfolio Launch
+Pharma Launch Forecast – Use Case 5: Eye Care Franchise Portfolio Launch
 =====================================================================
 Sequential specialty ophthalmology market entry with AMNOG pricing,
 Facharzt adoption, field force scaling, and cross-product synergies.
@@ -80,7 +80,7 @@ def show():
     # SIDEBAR
     # ═══════════════════════════════════════════════════════════════════
     with st.sidebar:
-        st.markdown("#### Viatris EyeCare Portfolio")
+        st.markdown("#### Eye Care Franchise")
         st.markdown("*Specialty Ophthalmology DE*")
 
         scenario = st.selectbox("Szenario", [
@@ -189,7 +189,7 @@ def show():
     # ═══════════════════════════════════════════════════════════════════
     # HEADER
     # ═══════════════════════════════════════════════════════════════════
-    st.markdown("## Viatris EyeCare – Specialty Ophthalmology Portfolio")
+    st.markdown("## Eye Care Franchise – Specialty Ophthalmology Portfolio")
     st.markdown(f"*Sequenzieller Markteintritt DE | Szenario: **{scenario}** | "
                 f"3 Produkte, 7-Jahres-Horizont*")
 
@@ -556,7 +556,7 @@ def show():
         | Wettbewerb | Jaehrl. Share-Erosion pro Produkt | iKervis, Vevizye, Vuity |
 
         **Datenquellen (alle oeffentlich):**
-        - Viatris Investor Relations, Newsroom (Pipeline, $1B Target)
+        - Oeffentliche Investor Relations / Pipeline-Informationen
         - MHRA/FDA Approvals (RYZUMVI, Tyrvaya)
         - Novaliq/Thea (Vevizye EU-Zulassung Okt 2024)
         - Santen (iKervis: EUR 120-135/Mon., Schwere Keratitis)
@@ -567,5 +567,5 @@ def show():
 
 
 if __name__ == "__main__":
-    st.set_page_config(page_title="Viatris EyeCare", page_icon="👁", layout="wide")
+    st.set_page_config(page_title="Eye Care Franchise", page_icon="👁", layout="wide")
     show()

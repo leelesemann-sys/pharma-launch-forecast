@@ -1,5 +1,5 @@
 """
-Build a professional Excel forecast model for the Viatris EyeCare Ophthalmology Portfolio.
+Build a professional Excel forecast model for the Eye Care Franchise Ophthalmology Portfolio.
 
 Sheets:
 1. INPUTS          - All user-configurable parameters (yellow cells)
@@ -87,7 +87,7 @@ def build_model():
     ws.set_column("D:D", 58)
 
     row = 1
-    ws.merge_range(row, 1, row, 3, "Viatris EyeCare - Ophthalmology Portfolio Forecast", fmt["title"])
+    ws.merge_range(row, 1, row, 3, "Eye Care Franchise - Ophthalmology Portfolio Forecast", fmt["title"])
     row += 1
     ws.merge_range(row, 1, row, 3,
         "Sequenzieller Markteintritt DE | 3 Produkte | 7-Jahres-Horizont",
@@ -247,7 +247,7 @@ def build_model():
         ("iKervis (CsA)", "Santen", "Schwere Keratitis (DED)", "EUR 120-135", "Seit 2015, Referenzprodukt"),
         ("Vevizye (CsA)", "Novaliq / Thea", "Moderate-schwere DED", "EUR ~120 (erw.)", "EU-Zul. Okt 2024, DE-Launch 2025"),
         ("Restasis (CsA)", "AbbVie", "DED (nur USA)", "n/a DE", "Kein EU-Launch"),
-        ("Tyrvaya (Varenicl.)", "Viatris (Oyster Pt.)", "DED, neuer MOA", "EUR 140 (gepl.)", "Kein EMA-Filing bisher"),
+        ("Tyrvaya (Varenicl.)", "Specialty Pharma", "DED, neuer MOA", "EUR 140 (gepl.)", "Kein EMA-Filing bisher"),
         ("OTC Traenen", "Diverse", "Milde DED, Befeuchtung", "EUR 5-15", "Freier Markt, hohes Volumen"),
     ]:
         row += 1
@@ -258,9 +258,9 @@ def build_model():
         ws2.write(row, 5, status, fmt["label"])
 
     row += 2
-    ws2.merge_range(row, 1, row, 5, "Viatris Ophthalmologie-Pipeline", fmt["section"])
+    ws2.merge_range(row, 1, row, 5, "Ophthalmologie-Pipeline (Eye Care Franchise)", fmt["section"])
     for label, value in [
-        ("Strategie", "$1B+ Specialty-Umsatz bis 2028 (Viatris Investor Day)"),
+        ("Strategie", "Aufbau Specialty-Ophthalmologie durch Akquisitionen + Pipeline"),
         ("Oyster Point Akquisition", "Abgeschlossen 2023, Basis fuer Tyrvaya"),
         ("Famy Life Sciences", "Erworben 2023, RYZUMVI + MR-141 Pipeline"),
         ("RYZUMVI (Phentolamin)", "FDA-zugelassen (Aug 2023), EU-Einreichung erwartet"),
@@ -501,7 +501,7 @@ def build_model():
     ws5.set_column("C:E", 22)
 
     row = 1
-    ws5.merge_range(row, 1, row, 4, "Executive Summary - Viatris EyeCare Portfolio", fmt["title"])
+    ws5.merge_range(row, 1, row, 4, "Executive Summary - Eye Care Franchise Portfolio", fmt["title"])
 
     row += 2
     ws5.merge_range(row, 1, row, 4, "Szenario-Vergleich (7-Jahres-Horizont)", fmt["section"])
@@ -630,13 +630,12 @@ def build_model():
         ("DED Markt DE (Rx+OTC)", "~EUR 430 Mio. (CAGR 5.7%)", "Grand View Research / IQVIA", "FAKT"),
         ("iKervis Preis/Mon.", "EUR 120-135 (schwere Keratitis)", "Lauer-Taxe / Santen", "FAKT"),
         ("Vevizye EU-Zulassung", "Oktober 2024 (Novaliq/Thea)", "EMA EPAR", "FAKT"),
-        ("RYZUMVI FDA-Zulassung", "August 2023 (Phentolamin)", "FDA / Viatris IR", "FAKT"),
+        ("RYZUMVI FDA-Zulassung", "August 2023 (Phentolamin)", "FDA Public Assessment", "FAKT"),
         ("Tyrvaya FDA-Zulassung", "Oktober 2021 (Vareniclin)", "FDA / Oyster Point", "FAKT"),
-        ("Tyrvaya: kein EMA-Filing", "Stand Feb. 2025: keine EU-Einreichung", "Viatris Pipeline / ClinTrials", "FAKT"),
-        ("Oyster Point Akquisition", "2023, ~$785M (Viatris)", "Viatris Investor Relations", "FAKT"),
-        ("Famy Life Sciences", "2023 erworben (RYZUMVI + MR-141)", "Viatris Newsroom", "FAKT"),
+        ("Tyrvaya: kein EMA-Filing", "Stand Feb. 2025: keine EU-Einreichung", "Pipeline-Daten / ClinTrials", "FAKT"),
+        ("Oyster Point Akquisition", "2023, ~$785M", "Oeffentliche Pressemitteilungen", "FAKT"),
+        ("Famy Life Sciences", "2023 erworben (RYZUMVI + MR-141)", "Oeffentliche Pressemitteilungen", "FAKT"),
         ("Presbyopie DE", "~15 Mio. Betroffene (40+)", "Epidemiologische Schaetzung", "FAKT"),
-        ("Viatris $1B Specialty Ziel", "Bis 2028 (Investor Day)", "Viatris Investor Day 2024", "FAKT"),
     ]
     for dp, val, source, cat in facts:
         row += 1
@@ -705,8 +704,8 @@ def build_model():
     for c, h in enumerate(["Gap", "Beschreibung", "Datenquelle", "Kat."]):
         ws6.write(row, 1 + c, h, fmt["th"])
     gaps = [
-        ("EMA-Filing Tyrvaya", "Zeitpunkt und Strategie der EU-Einreichung unklar", "Viatris Regulatory Affairs", "LUECKE"),
-        ("MR-141 Phase-III Daten", "Ergebnisse Presbyopie-Studie stehen noch aus", "ClinicalTrials.gov / Viatris", "LUECKE"),
+        ("EMA-Filing Tyrvaya", "Zeitpunkt und Strategie der EU-Einreichung unklar", "Regulatory Intelligence", "LUECKE"),
+        ("MR-141 Phase-III Daten", "Ergebnisse Presbyopie-Studie stehen noch aus", "ClinicalTrials.gov", "LUECKE"),
         ("AMNOG-Dossier Details", "IQWiG-Bewertung und G-BA-Ergebnis sind produktspez.", "IQWiG / G-BA Verhandlung", "LUECKE"),
         ("Vevizye DE-Launch Preis", "Erstattungsbetrag noch in Verhandlung (2025)", "Novaliq / GKV-SV", "LUECKE"),
         ("Real-World-Compliance", "Ophth. Compliance-Daten fuer Augentropfen/Spray", "Observational Studies / IQVIA", "LUECKE"),
@@ -724,9 +723,9 @@ def build_model():
 
     row += 3
     ws6.merge_range(row, 1, row, 4,
-        "Hinweis: Alle Daten synthetisch. Referenzen: Viatris Investor Relations, FDA/EMA Public Assessments, "
+        "Hinweis: Alle Daten synthetisch. Referenzen: FDA/EMA Public Assessments, "
         "KBV Aerztestatistik, Grand View Research (Dry Eye), Santen (iKervis), Novaliq (Vevizye), "
-        "ClinicalTrials.gov. Kein Bezug zu vertraulichen Daten.",
+        "ClinicalTrials.gov, oeffentliche Investor Relations. Kein Bezug zu vertraulichen Daten.",
         fmt["hint"])
 
     wb.close()
