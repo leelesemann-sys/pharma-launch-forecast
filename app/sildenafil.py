@@ -53,6 +53,29 @@ def show():
         div[data-testid="stSidebar"] .stMarkdown p { font-size: 13px; }
         div[data-testid="stSidebar"] label { font-size: 13px !important; }
         .plot-container { margin-top: -10px; }
+
+        /* Tab styling */
+        .stTabs [data-baseweb="tab-list"] {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            gap: 2px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            color: #64748b;
+        }
+        .stTabs [aria-selected="true"] {
+            background: #ffffff !important;
+            border: 1px solid #e5e7eb !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            color: #0f172a !important;
+            font-weight: 600;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -112,15 +135,9 @@ def show():
             tada_switch = st.slider("Migration zu Sildenafil OTC (%)", 0, 30, 12, key="sil_tadas") / 100
 
     # ─── Build params ──────────────────────────────────────────────
-    sp = {}
-    if scenario == "Optimistisch (BMG erzwingt Switch)":
-        sp = {"otc_peak_packs_per_month": 450_000, "otc_ramp_months": 12,
-              "marketing_monthly_eur": 750_000, "new_patient_share": 0.70,
-              "rx_decline_rate": 0.05, "brand_otc_share": 0.50}
-    elif scenario == "Konservativ (SVA-Auflagen)":
-        sp = {"otc_peak_packs_per_month": 200_000, "otc_ramp_months": 24,
-              "marketing_monthly_eur": 300_000, "new_patient_share": 0.55,
-              "rx_decline_rate": 0.12, "brand_otc_share": 0.35}
+    # NOTE: Scenarios DON'T override slider-based values.
+    # All slider values always come directly from the sidebar.
+    # Scenarios only set the dropdown label (informational).
 
     channels = [
         ChannelParams(name="Stationaere Apotheke", share_of_otc=ch_apo / 100,
@@ -140,16 +157,16 @@ def show():
         rx_price_brand=rx_price_brand,
         rx_price_generic=rx_price_generic,
         rx_brand_share=rx_brand_share,
-        rx_decline_rate=sp.get("rx_decline_rate", rx_decline),
+        rx_decline_rate=rx_decline,
         otc_price_per_tablet=otc_price,
-        otc_peak_packs_per_month=sp.get("otc_peak_packs_per_month", otc_peak),
-        otc_ramp_months=sp.get("otc_ramp_months", otc_ramp),
-        new_patient_share=sp.get("new_patient_share", new_patient),
-        brand_otc_share=sp.get("brand_otc_share", brand_share),
+        otc_peak_packs_per_month=otc_peak,
+        otc_ramp_months=otc_ramp,
+        new_patient_share=new_patient,
+        brand_otc_share=brand_share,
         brand_otc_share_trend=-brand_erosion,
         brand_price_premium=brand_premium,
         channels=channels,
-        marketing_monthly_eur=sp.get("marketing_monthly_eur", mktg),
+        marketing_monthly_eur=mktg,
         awareness_peak=aw_peak,
         awareness_baseline=aw_base,
         awareness_ramp_months=aw_ramp,

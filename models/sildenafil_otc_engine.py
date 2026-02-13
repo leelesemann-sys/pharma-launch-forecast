@@ -346,6 +346,22 @@ def forecast_sildenafil_otc(
         otc_brand_packs = otc_total_packs_adj * brand_share
         otc_generic_packs = otc_total_packs_adj * (1 - brand_share)
 
+        # Brand premium: Viagra Connect sells at a premium vs. generic OTC.
+        # Recalculate manufacturer revenue accounting for brand/generic price split.
+        otc_price_now = params.otc_price_per_tablet * (
+            1 + params.price_trend_annual
+        ) ** year_frac
+        generic_price = otc_price_now
+        brand_price = otc_price_now * params.brand_price_premium
+        # Weighted average revenue: brand packs × brand price + generic packs × generic price
+        brand_rev_bonus = (
+            otc_brand_packs * (brand_price - generic_price) * params.otc_avg_pack_size
+        )
+        # Apply average manufacturer share across channels
+        avg_mfr_pct = total_otc_manufacturer_revenue / total_otc_retail_revenue if total_otc_retail_revenue > 0 else 0.52
+        total_otc_manufacturer_revenue += brand_rev_bonus * avg_mfr_pct
+        total_otc_retail_revenue += brand_rev_bonus
+
         # ─── Volume decomposition ──────────────────────────────
         otc_from_new_patients = otc_total_packs_adj * params.new_patient_share
         otc_from_rx_migration = otc_total_packs_adj * (1 - params.new_patient_share) * 0.7
