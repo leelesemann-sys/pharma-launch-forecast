@@ -382,6 +382,10 @@ def show():
                 name="MSLs", line=dict(color=TEAL, width=2.5),
                 fill="tozeroy", fillcolor="rgba(13,148,136,0.1)",
             ))
+            for p in products:
+                fig3.add_vline(x=p.launch_month, line_dash="dot", line_color="#ccc",
+                               annotation_text=f"{p.name} Launch",
+                               annotation_font_size=9, annotation_font_color="#94a3b8")
             fig3.update_layout(
                 title="Aussendienst-Aufbau", xaxis_title="Monate",
                 yaxis_title="Anzahl", height=380,
@@ -411,6 +415,10 @@ def show():
                 x=df["month"], y=df["ff_digital"],
                 name="Digital", stackgroup="one", line=dict(color=GREEN),
             ))
+            for p in products:
+                fig3b.add_vline(x=p.launch_month, line_dash="dot", line_color="#ccc",
+                                annotation_text=f"{p.name} Launch",
+                                annotation_font_size=9, annotation_font_color="#94a3b8")
             fig3b.update_layout(
                 title="GTM-Kosten nach Kategorie", xaxis_title="Monate",
                 yaxis_title="EUR/Monat", height=380,
@@ -428,6 +436,10 @@ def show():
             x=df["month"], y=revenue_per_rep,
             name="Umsatz pro Rep", line=dict(color=INDIGO, width=2.5),
         ))
+        for p in products:
+            fig3c.add_vline(x=p.launch_month, line_dash="dot", line_color="#ccc",
+                            annotation_text=f"{p.name} Launch",
+                            annotation_font_size=9, annotation_font_color="#94a3b8")
         fig3c.update_layout(
             title="Effizienz: Umsatz pro Sales Rep/Monat",
             xaxis_title="Monate", yaxis_title="EUR/Rep/Monat", height=350,

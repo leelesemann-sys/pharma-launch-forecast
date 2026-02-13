@@ -278,8 +278,14 @@ def _amnog_price(month: int, launch_month: int, launch_price: float,
 
 
 def _field_force_cost(month: int, ff: FieldForceParams,
-                      products_launched: int) -> dict:
-    """Calculate field force costs for a given month."""
+                      products_launched: int,
+                      launch_months: Optional[List[int]] = None) -> dict:
+    """Calculate field force costs for a given month.
+
+    Each product launch triggers its own heavy-marketing phase
+    (launch_phase_months long). Synergy discounts apply to P2/P3.
+    Outside any active launch window → maintenance marketing.
+    """
     # Reps ramp
     if ff.reps_ramp_months > 0:
         rep_progress = min(1.0, month / ff.reps_ramp_months)
@@ -296,17 +302,32 @@ def _field_force_cost(month: int, ff: FieldForceParams,
     msls = ff.msls_at_launch + (ff.msls_peak - ff.msls_at_launch) * msl_progress
     msl_cost_monthly = msls * ff.msl_annual_cost / 12
 
-    # Marketing: heavy during launch, then maintenance
-    # Synergy: later products cost less to launch
-    synergy = 1.0
-    if products_launched == 2:
-        synergy = ff.synergy_factor_p2
-    elif products_launched >= 3:
-        synergy = ff.synergy_factor_p3
+    # Marketing: each launch gets its own heavy-phase window
+    # Check if we are within any product's launch window
+    in_launch_phase = False
+    active_launch_idx = 0  # which product's launch phase we're in (0-based)
+    if launch_months:
+        for idx, lm in enumerate(launch_months):
+            if lm <= month < lm + ff.launch_phase_months:
+                in_launch_phase = True
+                active_launch_idx = idx
+                break
 
-    marketing = ff.launch_marketing_monthly * synergy
-    if month > ff.launch_phase_months * products_launched:
-        marketing = ff.maintenance_marketing_monthly
+    if in_launch_phase:
+        # Synergy: P1 = 100%, P2 = synergy_factor_p2, P3+ = synergy_factor_p3
+        if active_launch_idx == 0:
+            synergy = 1.0
+        elif active_launch_idx == 1:
+            synergy = ff.synergy_factor_p2
+        else:
+            synergy = ff.synergy_factor_p3
+        marketing = ff.launch_marketing_monthly * synergy
+    else:
+        # Outside any launch window → maintenance
+        if products_launched > 0:
+            marketing = ff.maintenance_marketing_monthly
+        else:
+            marketing = 0
 
     # Congress & KOL (annual, spread monthly)
     congress_monthly = ff.congress_annual_budget / 12
@@ -351,6 +372,9 @@ def forecast_ophthalmology(
     rows = []
     cum = {"revenue": 0.0, "profit": 0.0, "gtm_cost": 0.0}
 
+    # Sorted launch months for GTM cost calculation
+    launch_months_sorted = sorted(p.launch_month for p in products)
+
     for m in range(1, forecast_months + 1):
         row_data = {"month": m}
 
@@ -359,7 +383,8 @@ def forecast_ophthalmology(
 
         # ─── Field Force & GTM costs ────────────────────────────
         if products_launched > 0:
-            ff_data = _field_force_cost(m, field_force, products_launched)
+            ff_data = _field_force_cost(m, field_force, products_launched,
+                                        launch_months_sorted)
         else:
             ff_data = {k: 0 for k in ["reps", "msls", "rep_cost", "msl_cost",
                                        "marketing", "congress_kol", "digital", "total_gtm_cost"]}
