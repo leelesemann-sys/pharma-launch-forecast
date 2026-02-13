@@ -413,13 +413,6 @@ def forecast_ophthalmology(
 
             row_data[f"{prefix}_launched"] = 1
 
-            # Prescriber adoption (S-curve)
-            prescribers = _logistic_ramp(
-                m, p.launch_month, p.peak_prescribers, p.prescriber_ramp_months
-            )
-            row_data[f"{prefix}_prescribers"] = round(prescribers)
-            total_prescribers += round(prescribers)
-
             # Market share (S-curve + competitive erosion)
             base_share = _logistic_ramp(
                 m, p.launch_month, p.peak_market_share, p.adoption_speed
@@ -428,6 +421,24 @@ def forecast_ophthalmology(
             competitive_erosion = max(0, 1.0 + p.competitive_pressure_annual * years_since_launch)
             effective_share = base_share * competitive_erosion
             row_data[f"{prefix}_share"] = effective_share
+
+            # Prescriber count derived from market share
+            # Share ramp progress (0→1) drives prescriber ramp to peak_prescribers.
+            # Changing peak_market_share scales the absolute number of prescribers too:
+            #   default peak_share → peak_prescribers; different peak_share → proportional.
+            # We use the raw S-curve progress (base_share / peak_market_share) for shape,
+            # then scale peak_prescribers by (peak_market_share / default_peak_share).
+            # This way: higher peak share → more adopting doctors.
+            default_peak_shares = {"ryzumvi": 0.50, "mr141": 0.40, "tyrvaya": 0.20}
+            default_ps = default_peak_shares.get(p.code, 0.20)
+            share_ratio = p.peak_market_share / default_ps if default_ps > 0 else 1.0
+            if p.peak_market_share > 0:
+                ramp_progress = base_share / p.peak_market_share  # 0→1 as S-curve fills
+            else:
+                ramp_progress = 0.0
+            prescribers = ramp_progress * competitive_erosion * p.peak_prescribers * share_ratio
+            row_data[f"{prefix}_prescribers"] = round(prescribers)
+            total_prescribers += round(prescribers)
 
             # Patient volume (eligible population grows annually)
             years_into_model = (m - 1) / 12.0
