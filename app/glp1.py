@@ -30,34 +30,19 @@ def show():
         # ─── Custom CSS ─────────────────────────────────────────────────────────
     st.markdown("""
     <style>
-        .kpi-card {
-            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
+        .block-container { padding-top: 1rem !important; padding-bottom: 0.5rem !important; }
+        .kpi-card, .kpi-card-orange, .kpi-card-blue,
+        .kpi-card-green, .kpi-card-red {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px; padding: 10px 8px;
+            color: #1e293b;
+            text-align: center; margin: 2px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
-        .kpi-card-orange {
-            background: linear-gradient(135deg, #9a3412 0%, #ea580c 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
-        }
-        .kpi-card-blue {
-            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
-        }
-        .kpi-card-green {
-            background: linear-gradient(135deg, #1a5e3a 0%, #27ae60 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
-        }
-        .kpi-card-red {
-            background: linear-gradient(135deg, #8b1a1a 0%, #c0392b 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
-        }
-        .kpi-value { font-size: 26px; font-weight: 700; margin: 4px 0; }
-        .kpi-label { font-size: 12px; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px; }
-        .kpi-sublabel { font-size: 11px; opacity: 0.65; margin-top: 2px; }
+        .kpi-value { font-size: 18px; font-weight: 700; margin: 2px 0; line-height: 1.2; color: #0f172a; }
+        .kpi-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-sublabel { font-size: 9px; color: #94a3b8; margin-top: 1px; }
         .perspective-header {
             font-size: 16px; padding: 10px 15px; border-radius: 8px;
             margin-bottom: 20px; font-weight: 600;
