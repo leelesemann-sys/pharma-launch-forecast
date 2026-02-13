@@ -140,7 +140,7 @@ def show():
             ff_msls = st.number_input("Peak MSLs", 3, 25, 12, key="ff_msls")
             ff_launch_mktg = st.number_input("Launch-Marketing/Mon. (EUR)", 100_000, 1_000_000, 400_000, 50_000, key="ff_mktg")
             ff_synergy_p2 = st.slider("Synergie P2 (Kostenanteil %)", 40, 100, 70, key="ff_syn2") / 100
-            ff_synergy_p3 = st.slider("Synergie P3 (Kostenanteil %)", 30, 100, 60, key="ff_syn3") / 100
+            ff_synergy_p3 = st.slider("Synergie P3 (Kostenanteil %)", 30, 100, 80, key="ff_syn3") / 100
 
     # ─── Apply scenario overrides ──────────────────────────────
     # NOTE: Scenarios only override NON-slider params (launch timing, reps).

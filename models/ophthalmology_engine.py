@@ -120,7 +120,7 @@ class FieldForceParams:
 
     # ─── Synergy: shared infrastructure across products ─────────
     synergy_factor_p2: float = 0.70        # P2 launch costs = 70% of standalone
-    synergy_factor_p3: float = 0.60        # P3 launch costs = 60% of standalone
+    synergy_factor_p3: float = 0.80        # P3 launch costs = 80% (less synergy: different segment)
 
 
 # ═══════════════════════════════════════════════════════════════════
