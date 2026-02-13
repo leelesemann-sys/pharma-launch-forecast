@@ -34,39 +34,26 @@ def show():
 
     st.markdown("""
     <style>
-        .kpi-card {
-            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
+        /* Remove Streamlit default top padding */
+        .block-container { padding-top: 1rem !important; padding-bottom: 0.5rem !important; }
+        header[data-testid="stHeader"] { height: 0; }
+
+        .kpi-card, .kpi-card-teal, .kpi-card-amber,
+        .kpi-card-green, .kpi-card-purple, .kpi-card-indigo {
+            border-radius: 8px; padding: 10px 8px; color: white;
+            text-align: center; margin: 2px 0;
         }
-        .kpi-card-teal {
-            background: linear-gradient(135deg, #134e4a 0%, #0d9488 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
-        }
-        .kpi-card-amber {
-            background: linear-gradient(135deg, #78350f 0%, #d97706 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
-        }
-        .kpi-card-green {
-            background: linear-gradient(135deg, #1a5e3a 0%, #27ae60 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
-        }
-        .kpi-card-purple {
-            background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
-        }
-        .kpi-card-indigo {
-            background: linear-gradient(135deg, #312e81 0%, #4f46e5 100%);
-            border-radius: 12px; padding: 18px; color: white;
-            text-align: center; margin: 5px 0;
-        }
-        .kpi-value { font-size: 26px; font-weight: 700; margin: 4px 0; }
-        .kpi-label { font-size: 12px; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px; }
-        .kpi-sublabel { font-size: 11px; opacity: 0.65; margin-top: 2px; }
+        .kpi-card   { background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); }
+        .kpi-card-teal   { background: linear-gradient(135deg, #134e4a 0%, #0d9488 100%); }
+        .kpi-card-amber  { background: linear-gradient(135deg, #78350f 0%, #d97706 100%); }
+        .kpi-card-green  { background: linear-gradient(135deg, #1a5e3a 0%, #27ae60 100%); }
+        .kpi-card-purple { background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%); }
+        .kpi-card-indigo { background: linear-gradient(135deg, #312e81 0%, #4f46e5 100%); }
+
+        .kpi-value { font-size: 18px; font-weight: 700; margin: 2px 0; line-height: 1.2; }
+        .kpi-label { font-size: 10px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-sublabel { font-size: 9px; opacity: 0.65; margin-top: 1px; }
+
         div[data-testid="stSidebar"] {
             background-color: #f8fafc;
             min-width: 280px !important; max-width: 340px !important; width: 320px !important;
@@ -189,9 +176,8 @@ def show():
     # ═══════════════════════════════════════════════════════════════════
     # HEADER
     # ═══════════════════════════════════════════════════════════════════
-    st.markdown("## Eye Care Franchise – Specialty Ophthalmology Portfolio")
-    st.markdown(f"*Sequenzieller Markteintritt DE | Szenario: **{scenario}** | "
-                f"3 Produkte, 7-Jahres-Horizont*")
+    st.markdown(f"**Eye Care Franchise** – Specialty Ophthalmology Portfolio &nbsp;|&nbsp; "
+                f"Szenario: **{scenario}** &nbsp;|&nbsp; 3 Produkte, 7-Jahres-Horizont")
 
     # ═══════════════════════════════════════════════════════════════════
     # KPI CARDS
@@ -250,8 +236,6 @@ def show():
             <div class="kpi-value">{kpis.get('tyrvaya_revenue_share',0):.0%}</div>
             <div class="kpi-sublabel">EUR {kpis.get('tyrvaya_total_revenue',0)/1e6:.0f}M Umsatz</div>
         </div>""", unsafe_allow_html=True)
-
-    st.markdown("---")
 
     # ═══════════════════════════════════════════════════════════════════
     # CHARTS
