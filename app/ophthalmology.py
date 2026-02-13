@@ -569,7 +569,7 @@ def show():
         | Facharzt-Adoption | Logistische S-Kurve pro Produkt | Pharma Launch Benchmarks |
         | AMNOG-Pricing | 3-Phasen: Frei → G-BA → Erosion | IQWiG / GKV-SV Verfahren |
         | Field Force | Lineare Skalierung + Synergie | Branchenbenchmarks (1 Rep:100-200 Aerzte) |
-        | Cross-Product Synergy | P2: 70%, P3: 60% der Standalone-Kosten | Portfolio-Effekte |
+        | Cross-Product Synergy | P2: 70%, P3: 80% der Standalone-Kosten | Portfolio-Effekte |
         | Wettbewerb | Jaehrl. Share-Erosion pro Produkt | iKervis, Vevizye, Vuity |
 
         **Datenquellen (alle oeffentlich):**
