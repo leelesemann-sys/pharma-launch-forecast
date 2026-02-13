@@ -34,9 +34,9 @@ def show():
 
     st.markdown("""
     <style>
-        /* Remove Streamlit default top padding */
-        .block-container { padding-top: 1rem !important; padding-bottom: 0.5rem !important; }
-        header[data-testid="stHeader"] { height: 0; }
+        /* Reduce Streamlit default top padding */
+        .block-container { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+        h2 { margin-top: 0 !important; padding-top: 0 !important; margin-bottom: 0.3rem !important; }
 
         .kpi-card, .kpi-card-teal, .kpi-card-amber,
         .kpi-card-green, .kpi-card-purple, .kpi-card-indigo,
@@ -174,8 +174,8 @@ def show():
     # ═══════════════════════════════════════════════════════════════════
     # HEADER
     # ═══════════════════════════════════════════════════════════════════
-    st.markdown(f"**Eye Care Franchise** – Specialty Ophthalmology Portfolio &nbsp;|&nbsp; "
-                f"Szenario: **{scenario}** &nbsp;|&nbsp; 3 Produkte, 7-Jahres-Horizont")
+    st.markdown("## Eye Care Franchise – Specialty Ophthalmology Portfolio")
+    st.caption(f"Sequenzieller Markteintritt DE | Szenario: **{scenario}** | 3 Produkte, 7-Jahres-Horizont")
 
     # ═══════════════════════════════════════════════════════════════════
     # KPI CARDS
