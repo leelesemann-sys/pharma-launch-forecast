@@ -91,22 +91,22 @@ def show():
             m_launch = st.number_input("Launch Monat", 6, 48, 18, key="m_lm")
             m_eligible = st.number_input("Elig. Patienten", 5_000_000, 25_000_000, 15_000_000, 1_000_000, key="m_elig")
             m_addressable = st.slider("Adressierbar (%)", 1, 10, 2, key="m_addr") / 100
+            m_compliance = st.slider("Compliance (%)", 30, 90, 60, key="m_comp") / 100
             m_share = st.slider("Peak Marktanteil (%)", 10, 60, 40, key="m_share") / 100
             m_speed = st.slider("Adoption (Mon. bis halber Peak MA)", 12, 48, 24, key="m_speed")
             m_price = st.number_input("Preis/Monat (EUR)", 20.0, 100.0, 45.0, 5.0, key="m_price")
             m_amnog_cut = st.slider("AMNOG-Preisabschlag (%)", 5, 50, 25, key="m_amnog") / 100
-            m_compliance = st.slider("Compliance (%)", 30, 90, 60, key="m_comp") / 100
 
         # ─── Product 3: Tyrvaya ─────────────────────────────────
         with st.expander("P3: Tyrvaya (Trockenes Auge)", expanded=False):
             t_launch = st.number_input("Launch Monat", 24, 72, 42, key="t_lm")
             t_eligible = st.number_input("Diagn. DED-Patienten", 500_000, 3_000_000, 1_700_000, 100_000, key="t_elig")
             t_addressable = st.slider("Adressierbar (%)", 3, 30, 12, key="t_addr") / 100
+            t_compliance = st.slider("Compliance (%)", 40, 85, 65, key="t_comp") / 100
             t_share = st.slider("Peak Marktanteil (%)", 5, 40, 20, key="t_share") / 100
             t_speed = st.slider("Adoption (Mon. bis halber Peak MA)", 18, 48, 30, key="t_speed")
             t_price = st.number_input("Preis/Monat (EUR)", 80.0, 250.0, 140.0, 10.0, key="t_price")
             t_amnog_cut = st.slider("AMNOG-Preisabschlag (%)", 5, 40, 15, key="t_amnog") / 100
-            t_compliance = st.slider("Compliance (%)", 40, 85, 65, key="t_comp") / 100
             t_competitors = st.number_input("Wettbewerber", 1, 6, 3, key="t_comp_n")
 
         # ─── Field Force ────────────────────────────────────────
