@@ -143,13 +143,14 @@ def show():
             ff_synergy_p3 = st.slider("Synergie P3 (Kostenanteil %)", 30, 100, 60, key="ff_syn3") / 100
 
     # ─── Apply scenario overrides ──────────────────────────────
+    # NOTE: Scenarios only override NON-slider params (launch timing, reps).
+    # All slider-based values (share, speed, price) always come from the sidebar
+    # so the user sees exactly what the model uses.
     if scenario == "Aggressiv (schneller Aufbau)":
-        r_speed, m_speed, t_speed = 12, 18, 24
         m_launch, t_launch = 12, 30
         ff_reps_peak = 60
     elif scenario == "Konservativ (Tyrvaya verzoegert)":
         t_launch = 60
-        t_share = 0.12
         ff_reps_peak = 35
 
     # ─── Build product params ──────────────────────────────────
