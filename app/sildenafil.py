@@ -104,13 +104,13 @@ def show():
         # a key already exists in session_state).
         if scenario == "Optimistisch (BMG erzwingt Switch)":
             _d = dict(otc_peak=450_000, otc_ramp=12, mktg=750_000,
-                      new_patient=70, rx_decline=5, brand_share=50)
+                      new_patient=70, rx_decline=5, brand_share=35)
         elif scenario == "Konservativ (SVA-Auflagen)":
             _d = dict(otc_peak=200_000, otc_ramp=24, mktg=300_000,
-                      new_patient=55, rx_decline=12, brand_share=35)
+                      new_patient=55, rx_decline=12, brand_share=20)
         else:  # Base Case
             _d = dict(otc_peak=350_000, otc_ramp=18, mktg=500_000,
-                      new_patient=63, rx_decline=8, brand_share=45)
+                      new_patient=63, rx_decline=8, brand_share=25)
 
         # Reset scenario-dependent slider keys when scenario changes.
         # We pop the cached values and rerun so Streamlit picks up the
@@ -261,7 +261,7 @@ def show():
         st.markdown(f"""<div class="kpi-card-green">
             <div class="kpi-label">Therapiequote Neu</div>
             <div class="kpi-value">{kpis['treatment_rate_final']:.0%}</div>
-            <div class="kpi-sublabel">vorher: 33%</div>
+            <div class="kpi-sublabel">vorher: 30%</div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown("---")
@@ -272,7 +272,7 @@ def show():
 
     # ─── Chart 1: Dual Channel (Rx vs OTC packs) ──────────────────
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
-        "Dual Channel", "Apothekenverteilung", "Brand vs. Generika",
+        "Rx vs. OTC", "Apothekenverteilung", "Brand vs. Generika",
         "Treatment Gap", "Profitabilitaet"
     ])
 
@@ -290,7 +290,7 @@ def show():
             fig1.add_vline(x=kpis["crossover_month"], line_dash="dot",
                            line_color=AMBER, annotation_text="OTC > Rx")
         fig1.update_layout(
-            title="Dual-Kanal: Rx vs. OTC Packungen/Monat",
+            title="Rx vs. OTC Packungen/Monat",
             xaxis_title="Monate nach Switch", yaxis_title="Packungen",
             yaxis_tickformat=",", height=420,
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
@@ -309,7 +309,7 @@ def show():
         ))
         fig1b.update_layout(
             barmode="stack",
-            title="Monatlicher Umsatz nach Kanal",
+            title="Rx vs. OTC Umsatz/Monat",
             xaxis_title="Monate nach Switch", yaxis_title="EUR",
             height=380,
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
@@ -446,53 +446,65 @@ def show():
 
     # ─── Chart 4: Treatment Gap ───────────────────────────────────
     with tab4:
-        fig5 = go.Figure()
-        fig5.add_trace(go.Scatter(
-            x=df["month"], y=df["treatment_rate_effective"],
-            name="Therapiequote (effektiv)",
-            line=dict(color=GREEN, width=3),
-            fill="tozeroy", fillcolor="rgba(39,174,96,0.1)",
+        # Compute monthly treated/untreated absolute numbers
+        treated_monthly = df["treatment_rate_effective"] * params.ed_prevalence_men
+        untreated_monthly = params.ed_prevalence_men - treated_monthly
+
+        col_tg1, col_tg2 = st.columns(2)
+
+        # Left: stacked bar – absolute numbers (treated vs. untreated)
+        with col_tg1:
+            fig_tg_abs = go.Figure()
+            fig_tg_abs.add_trace(go.Bar(
+                x=df["month"], y=treated_monthly,
+                name="Behandelt",
+                marker_color=GREEN,
+            ))
+            fig_tg_abs.add_trace(go.Bar(
+                x=df["month"], y=untreated_monthly,
+                name="Unbehandelt",
+                marker_color="#e5e7eb",
+            ))
+            fig_tg_abs.update_layout(
+                barmode="stack",
+                title="ED-Patienten: Behandelt vs. Unbehandelt",
+                xaxis_title="Monate nach Switch", yaxis_title="Maenner",
+                yaxis_tickformat=",", height=420,
+                legend=dict(orientation="h", yanchor="bottom", y=1.02),
+            )
+            st.plotly_chart(fig_tg_abs, width="stretch")
+
+        # Right: treatment rate over time
+        with col_tg2:
+            fig_tg_rate = go.Figure()
+            fig_tg_rate.add_trace(go.Scatter(
+                x=df["month"], y=df["treatment_rate_effective"],
+                name="Therapiequote",
+                line=dict(color=GREEN, width=3),
+                fill="tozeroy", fillcolor="rgba(39,174,96,0.1)",
+            ))
+            fig_tg_rate.add_hline(y=params.treatment_rate, line_dash="dash",
+                                  line_color="#999", annotation_text="Vor Switch (30%)")
+            fig_tg_rate.update_layout(
+                title="Therapiequote ueber Zeit",
+                xaxis_title="Monate nach Switch", yaxis_title="Therapiequote",
+                yaxis_tickformat=".0%", height=420,
+            )
+            st.plotly_chart(fig_tg_rate, width="stretch")
+
+        # Awareness below (full width)
+        fig_aw = go.Figure()
+        fig_aw.add_trace(go.Scatter(
+            x=df["month"], y=df["awareness"],
+            name="Brand Awareness",
+            line=dict(color=AMBER, width=2.5),
         ))
-        fig5.add_hline(y=params.treatment_rate, line_dash="dash",
-                       line_color="#999", annotation_text="Vor Switch (33%)")
-        fig5.update_layout(
-            title="Schliessung der Therapieluecke durch OTC-Zugang",
-            xaxis_title="Monate nach Switch", yaxis_title="Therapiequote",
-            yaxis_tickformat=".0%", height=400,
+        fig_aw.update_layout(
+            title="Consumer Awareness (Viagra OTC)",
+            xaxis_title="Monate nach Switch", yaxis_title="Awareness",
+            yaxis_tickformat=".0%", yaxis_range=[0, 1], height=340,
         )
-        st.plotly_chart(fig5, width="stretch")
-
-        col_g, col_h = st.columns(2)
-        with col_g:
-            fig5b = go.Figure()
-            fig5b.add_trace(go.Scatter(
-                x=df["month"], y=df["awareness"],
-                name="Brand Awareness",
-                line=dict(color=AMBER, width=2.5),
-            ))
-            fig5b.update_layout(
-                title="Consumer Awareness (Viagra OTC)",
-                xaxis_title="Monate", yaxis_title="Awareness",
-                yaxis_tickformat=".0%", yaxis_range=[0, 1], height=360,
-            )
-            st.plotly_chart(fig5b, width="stretch")
-
-        with col_h:
-            untreated_before = params.ed_prevalence_men * (1 - params.treatment_rate)
-            untreated_after = params.ed_prevalence_men * (1 - kpis["treatment_rate_final"])
-            fig5c = go.Figure()
-            fig5c.add_trace(go.Bar(
-                x=["Vor Switch", "Nach 5J OTC"],
-                y=[untreated_before, untreated_after],
-                marker_color=[RED, GREEN],
-                text=[f"{untreated_before/1e6:.1f}M", f"{untreated_after/1e6:.1f}M"],
-                textposition="outside",
-            ))
-            fig5c.update_layout(
-                title="Unbehandelte Maenner mit ED (Deutschland)",
-                yaxis_title="Anzahl", yaxis_tickformat=",", height=360,
-            )
-            st.plotly_chart(fig5c, width="stretch")
+        st.plotly_chart(fig_aw, width="stretch")
 
     # ─── Chart 5: Profitability ───────────────────────────────────
     with tab5:
@@ -539,11 +551,11 @@ def show():
     scenarios = {
         "Konservativ": {"otc_peak_packs_per_month": 200_000, "otc_ramp_months": 24,
                         "marketing_monthly_eur": 300_000, "new_patient_share": 0.55,
-                        "rx_decline_rate": 0.12, "brand_otc_share": 0.35},
+                        "rx_decline_rate": 0.12, "brand_otc_share": 0.20},
         "Base Case": {},
         "Optimistisch": {"otc_peak_packs_per_month": 450_000, "otc_ramp_months": 12,
                          "marketing_monthly_eur": 750_000, "new_patient_share": 0.70,
-                         "rx_decline_rate": 0.05, "brand_otc_share": 0.50},
+                         "rx_decline_rate": 0.05, "brand_otc_share": 0.35},
     }
 
     comp_rows = []
@@ -579,11 +591,16 @@ def show():
         | Awareness | S-Kurve mit hoher Baseline | Viagra Markenbekanntheit >60% |
 
         **Datenquellen (alle oeffentlich):**
+        - Arnold M (2023). Public-Health-Impact OTC-Switch Sildenafil 50 mg. HSK Berlin, inav-Gutachten (Viatris)
+        - Braun et al. (2000). Cologne Male Survey – ED-Praevalenz DE (19,2% bei 30-80J.)
+        - May et al. (2007). Cottbus Survey, n=10.000 – Behandlungsquote ~30%
+        - Capogrosso et al. (2013). 1 von 4 Neudiagnosen <40 Jahre
+        - Lee et al. (2021). UK Real-World-Studie, n=1.162 – signif. mehr Arzt-/Apothekenbesuche post-Switch
+        - Gordijn et al. (2022). Apotheken-Beratungsqualitaet bei OTC-Sildenafil (Nordirland)
+        - MHRA (2017). Public Assessment Report – Viagra Connect BTC-Reklassifizierung UK
         - IQVIA Pharmamarkt DE, Apotheke Adhoc (PDE5-Marktdaten)
         - Handelsblatt / Citeline (BfArM SVA-Entscheidungen 2022/2023/2025)
-        - PMC / Lee et al. 2021 (UK Real-World-Studie, n=1,162)
         - PAGB/Frontier Economics (UK OTC Impact Report)
-        - Viatris Investor Relations, Newsroom
         """)
 
 

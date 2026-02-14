@@ -5,7 +5,7 @@ Advanced Rx-to-OTC model with omnichannel distribution modeling.
 
 Key differences vs. generic PPI switch model (Use Case 3):
   - Patient already pays 100% Rx (ED not covered by GKV) → low price friction
-  - Massive treatment gap: ~67% of ED patients never see a doctor (shame barrier)
+  - Massive treatment gap: ~70% of ED patients never see a doctor (shame barrier)
   - OTC removes stigma barrier → huge market expansion (UK ref: 63% new patients)
   - Apothekenpflichtig: stationaere Apotheke vs. Online-Apotheke
   - Brand premium: Viagra vs. generic sildenafil OTC pricing power
@@ -15,13 +15,29 @@ Reference case: UK Viagra Connect (launched March 2018)
   - 50mg OTC, pharmacy-only, GBP 5/tablet
   - Year 1: ~GBP 16M retail, 63% new-to-therapy patients
   - NHS Rx prescriptions ALSO increased (no cannibalization of Rx channel)
+  - Signif. more GP/pharmacy visits post-switch (Lee et al. 2021, n=1,162)
+
+Epidemiology (Germany):
+  - ~5M men with moderate-to-complete ED (Braun et al. 2000)
+  - Prevalence 19.2% in men 30-80 (Braun et al. 2000; Cologne Male Survey)
+  - 1 in 4 newly diagnosed <40 years (Capogrosso et al. 2013)
+  - Only ~30% in medical treatment (May et al. 2007; Arnold 2023)
 
 Market data (Germany):
-  - 4-6M men with ED, only ~33% treated
   - ~2.6M PDE5 packs/year; Sildenafil 55-65% share
   - Viagra brand: ~10% of sildenafil packs (rest generics)
   - Generic Rx: EUR 0.95-2.30/tablet; Viagra brand: EUR 8-14/tablet
   - BfArM SVA rejected 3x (2022, 2023, 2025) but BMG wants switch
+
+Key sources:
+  - Arnold M (2023). Public-Health-Impact eines moeglichen OTC-Switches von
+    Sildenafil 50 mg. Hauptstadtkongress Berlin, inav-Gutachten (Viatris).
+  - Lee et al. (2021). UK real-world study, n=1,162 (PMC)
+  - Braun et al. (2000). Cologne Male Survey – ED prevalence DE
+  - May et al. (2007). Cottbus Survey, n=10,000 – treatment rate ~30%
+  - Capogrosso et al. (2013). 1 in 4 new ED patients <40 years
+  - MHRA (2017). Public Assessment Report Viagra Connect BTC reclassification
+  - Gordijn et al. (2022). NI pharmacy consultations for OTC sildenafil
 """
 
 from dataclasses import dataclass, field
@@ -63,7 +79,7 @@ class SildenafilOtcParams:
 
     # ─── Epidemiology ───────────────────────────────────────────
     ed_prevalence_men: int = 5_000_000     # men with moderate-to-complete ED (DE)
-    treatment_rate: float = 0.33           # currently treated (rest = treatment gap)
+    treatment_rate: float = 0.30           # currently treated (May et al. 2007; Arnold 2023)
     addressable_otc_pct: float = 0.14      # % of untreated who would buy OTC in steady state
 
     # ─── Rx channel (pre-switch) ────────────────────────────────
@@ -89,8 +105,8 @@ class SildenafilOtcParams:
     treatment_gap_closure_rate: float = 0.08  # 8% of untreated switch to OTC over 5 years
 
     # ─── Brand vs. Generic OTC ──────────────────────────────────
-    brand_otc_share: float = 0.45          # Viagra Connect vs generic OTC sildenafil
-    brand_otc_share_trend: float = -0.03   # annual erosion from generic OTC entrants
+    brand_otc_share: float = 0.25          # Viagra Connect vs generic OTC sildenafil
+    brand_otc_share_trend: float = -0.04   # annual erosion from generic OTC entrants
     brand_price_premium: float = 1.8       # brand is 1.8x generic OTC price
 
     # ─── Price dynamics ─────────────────────────────────────────
@@ -276,18 +292,24 @@ def forecast_sildenafil_otc(
         total_otc_manufacturer_revenue = 0.0
         total_otc_retail_revenue = 0.0
 
+        # Apply discretion bonus to channel weights, then re-normalize
+        # so total volume stays at otc_total_packs (bonus shifts mix, not inflates)
+        weighted_shares = []
         for i, ch in enumerate(params.channels):
-            ch_share = norm_shares[i]
+            discretion_bonus = 1.0 + (ch.discretion_factor - 0.7) * 0.15
+            weighted_shares.append(norm_shares[i] * discretion_bonus)
+        ws_sum = sum(weighted_shares)
+        disc_shares = [s / ws_sum for s in weighted_shares] if ws_sum > 0 else norm_shares
+
+        # Current OTC price with erosion (compute once per month)
+        otc_price_now = params.otc_price_per_tablet * (
+            1 + params.price_trend_annual
+        ) ** year_frac
+
+        for i, ch in enumerate(params.channels):
+            ch_share = disc_shares[i]
             ch_packs = otc_total_packs * ch_share
 
-            # Discretion effect on volume: channels with more privacy get bonus
-            discretion_bonus = 1.0 + (ch.discretion_factor - 0.7) * 0.15
-            ch_packs *= discretion_bonus
-
-            # Current OTC price with erosion
-            otc_price_now = params.otc_price_per_tablet * (
-                1 + params.price_trend_annual
-            ) ** year_frac
             ch_retail_rev = ch_packs * otc_price_now * params.otc_avg_pack_size
 
             # Manufacturer revenue = retail - channel margin - distribution
@@ -304,19 +326,14 @@ def forecast_sildenafil_otc(
                 "manufacturer_revenue": round(ch_mfr_rev),
             }
 
-        # Recalculate total OTC packs (after discretion bonus)
-        otc_total_packs_adj = sum(cd["packs"] for cd in channel_data.values())
+        otc_total_packs_adj = round(otc_total_packs)
 
         # ─── Brand vs. Generic OTC ─────────────────────────────
-        brand_share = max(0.15, params.brand_otc_share + params.brand_otc_share_trend * year_frac)
+        brand_share = max(0.10, params.brand_otc_share + params.brand_otc_share_trend * year_frac)
         otc_brand_packs = otc_total_packs_adj * brand_share
         otc_generic_packs = otc_total_packs_adj * (1 - brand_share)
 
         # Brand premium: Viagra Connect sells at a premium vs. generic OTC.
-        # Recalculate manufacturer revenue accounting for brand/generic price split.
-        otc_price_now = params.otc_price_per_tablet * (
-            1 + params.price_trend_annual
-        ) ** year_frac
         generic_price = otc_price_now
         brand_price = otc_price_now * params.brand_price_premium
         # Weighted average revenue: brand packs × brand price + generic packs × generic price
@@ -329,10 +346,13 @@ def forecast_sildenafil_otc(
         total_otc_retail_revenue += brand_rev_bonus
 
         # ─── Volume decomposition ──────────────────────────────
-        otc_from_new_patients = otc_total_packs_adj * params.new_patient_share
-        otc_from_rx_migration = otc_total_packs_adj * (1 - params.new_patient_share) * 0.7
-        otc_from_tadalafil = tada_migration
-        otc_from_other = otc_total_packs_adj - otc_from_new_patients - otc_from_rx_migration - otc_from_tadalafil
+        # Tadalafil migration is a known absolute volume; allocate the
+        # remainder between new patients and Rx migration using the
+        # new_patient_share ratio so the parts always sum to total.
+        otc_from_tadalafil = min(tada_migration, otc_total_packs_adj)
+        otc_excl_tada = otc_total_packs_adj - otc_from_tadalafil
+        otc_from_new_patients = otc_excl_tada * params.new_patient_share
+        otc_from_rx_migration = otc_excl_tada * (1 - params.new_patient_share)
 
         # ─── Tablets for comparison ─────────────────────────────
         rx_tablets = rx_packs * params.rx_avg_pack_size
@@ -358,18 +378,12 @@ def forecast_sildenafil_otc(
 
         # ─── Treatment gap metric ──────────────────────────────
         untreated = params.ed_prevalence_men * (1 - params.treatment_rate)
-        newly_treated_cumulative = min(
-            untreated * params.treatment_gap_closure_rate,
-            untreated * params.treatment_gap_closure_rate * min(1.0, m / 36)
-        )
+        # Linear ramp over 36 months, capped at closure_rate
+        ramp_frac = min(1.0, m / 36)
+        newly_treated_cumulative = untreated * params.treatment_gap_closure_rate * ramp_frac
         treatment_rate_new = params.treatment_rate + (
             newly_treated_cumulative / params.ed_prevalence_men
         )
-
-        # ─── OTC price ─────────────────────────────────────────
-        otc_price_now = params.otc_price_per_tablet * (
-            1 + params.price_trend_annual
-        ) ** year_frac
 
         rows.append({
             "month": m,
