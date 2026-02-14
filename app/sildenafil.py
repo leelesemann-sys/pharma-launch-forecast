@@ -192,14 +192,17 @@ def show():
         tadalafil_switch_to_sildenafil_otc=tada_switch,
     )
 
-    # DEBUG: Test with default params first to isolate issue
+    # DEBUG: Compare user params vs default params
     import sys
-    try:
-        test_p = SildenafilOtcParams()
-        test_df = forecast_sildenafil_otc(test_p)
-        st.success(f"Default params: OK ({len(test_df)} rows)")
-    except Exception as e:
-        st.error(f"Default params FAILED: {type(e).__name__}: {e}")
+    from dataclasses import asdict
+    default_p = SildenafilOtcParams()
+    dp = asdict(default_p)
+    up = asdict(params)
+    diffs = {k: {"default": dp[k], "user": up[k], "types": f"{type(dp[k]).__name__} vs {type(up[k]).__name__}"}
+             for k in dp if dp[k] != up[k]}
+    if diffs:
+        st.warning(f"Param diffs vs default ({len(diffs)}):")
+        st.json(diffs)
 
     try:
         df = forecast_sildenafil_otc(params)
