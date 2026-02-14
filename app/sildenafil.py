@@ -2,6 +2,7 @@
 Pharma Launch Forecast – Use Case 4: Sildenafil Rx-to-OTC Switch (Viatris/Viagra)
 ==================================================================================
 Advanced Rx-to-OTC model with pharmacy-only distribution.
+All volumes in TABLETS (1 tablet = 1 application = 50mg).
 """
 
 import sys, os, importlib
@@ -83,9 +84,9 @@ def show():
     </style>
     """, unsafe_allow_html=True)
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # SIDEBAR
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     with st.sidebar:
         st.markdown(f"#### Sildenafil Rx-to-OTC Switch")
         st.markdown("*Viatris / Viagra Connect (DE)*")
@@ -95,26 +96,20 @@ def show():
             "Konservativ (SVA-Auflagen)"
         ], key="sil_scenario")
 
-        # ─── Scenario-driven slider defaults ──────────────────────
-        # The scenario sets the DEFAULT values for sliders.  When the user
-        # switches scenario the sliders jump to the new defaults.  The user
-        # can still fine-tune every slider afterwards.
-        # We detect scenario changes and clear cached slider values so the
-        # new defaults actually take effect (Streamlit ignores `value=` when
-        # a key already exists in session_state).
+        # --- Scenario-driven slider defaults -----------------------
+        # All volumes in TABLETS (1 tablet = 1 application).
+        # OTC: 350K packs x 6 = 2.1M tablets; Rx: 217K packs x 4 = 868K tablets
         if scenario == "Optimistisch (BMG erzwingt Switch)":
-            _d = dict(otc_peak=450_000, otc_ramp=12, mktg=750_000,
+            _d = dict(otc_peak=2_700_000, otc_ramp=12, mktg=750_000,
                       new_patient=70, rx_decline=5, brand_share=35)
         elif scenario == "Konservativ (SVA-Auflagen)":
-            _d = dict(otc_peak=200_000, otc_ramp=24, mktg=300_000,
+            _d = dict(otc_peak=1_200_000, otc_ramp=24, mktg=300_000,
                       new_patient=55, rx_decline=12, brand_share=20)
         else:  # Base Case
-            _d = dict(otc_peak=350_000, otc_ramp=18, mktg=500_000,
+            _d = dict(otc_peak=2_100_000, otc_ramp=18, mktg=500_000,
                       new_patient=63, rx_decline=8, brand_share=25)
 
         # Reset scenario-dependent slider keys when scenario changes.
-        # We pop the cached values and rerun so Streamlit picks up the
-        # new defaults on the NEXT pass (pop + widget in same pass = ignored).
         _prev = st.session_state.get("_sil_prev_scenario")
         if _prev is not None and _prev != scenario:
             for _k in ["sil_rx_dec", "sil_otc_peak", "sil_otc_ramp",
@@ -127,7 +122,7 @@ def show():
         st.markdown("---")
 
         with st.expander("Rx-Markt", expanded=False):
-            rx_packs = st.number_input("Sildenafil Rx Pack./Mon.", 50_000, 500_000, 217_000, 5_000, key="sil_rx_packs")
+            rx_tablets = st.number_input("Sildenafil Rx Tabl./Mon.", 200_000, 2_500_000, 868_000, 10_000, key="sil_rx_tabs")
             rx_price_brand = st.number_input("Viagra Preis/Tabl. (EUR)", 5.0, 25.0, 11.19, 0.5, key="sil_rx_brand")
             rx_price_generic = st.number_input("Generika Preis/Tabl. (EUR)", 0.50, 5.0, 1.50, 0.1, key="sil_rx_gen")
             rx_brand_share = st.slider("Viagra Markenanteil Rx (%)", 2, 25, 10, key="sil_rx_bs") / 100
@@ -135,13 +130,18 @@ def show():
 
         with st.expander("OTC-Markt", expanded=False):
             otc_price = st.number_input("OTC Preis/Tablette (EUR)", 2.0, 15.0, 5.99, 0.5, key="sil_otc_p")
-            otc_peak = st.number_input("OTC Peak Pack./Mon.", 100_000, 800_000, _d["otc_peak"], 10_000, key="sil_otc_peak")
+            otc_peak = st.number_input("OTC Peak Tabl./Mon.", 500_000, 5_000_000, _d["otc_peak"], 100_000, key="sil_otc_peak")
             otc_ramp = st.slider("Monate bis Peak", 6, 36, _d["otc_ramp"], key="sil_otc_ramp")
             new_patient = st.slider("Neue Patienten (% OTC-Vol.)", 30, 80, _d["new_patient"], key="sil_np") / 100
             st.markdown("---")
             st.caption("Tadalafil-Migration (Cialis bleibt Rx)")
-            tada_monthly = st.number_input("Tadalafil Rx Pack./Mon.", 50_000, 300_000, 120_000, 5_000, key="sil_tada")
+            tada_monthly = st.number_input("Tadalafil Rx Tabl./Mon.", 200_000, 1_500_000, 480_000, 10_000, key="sil_tada")
             tada_switch = st.slider("Migration zu Sildenafil OTC (%)", 0, 30, 12, key="sil_tadas") / 100
+
+        with st.expander("OTC Marke vs. Generika", expanded=False):
+            brand_share = st.slider("Viagra Connect Anteil OTC (%)", 15, 70, _d["brand_share"], key="sil_brand") / 100
+            brand_erosion = st.slider("Markenanteil-Erosion p.a. (Pp.)", 0, 10, 3, key="sil_berosion") / 100
+            brand_premium = st.slider("Preispremium Marke (x)", 1.0, 3.0, 1.8, 0.1, key="sil_bprem")
 
         with st.expander("Stationaer vs. Online", expanded=False):
             st.caption("Apothekenpflichtig: nur Apotheken-Kanaele")
@@ -150,15 +150,7 @@ def show():
             st.markdown(f"*Online-Apotheke: {ch_online}%*")
             online_growth = st.slider("Online-Wachstum p.a. (Pp.)", 0, 10, 2, key="sil_og") / 100
 
-        with st.expander("OTC Marke vs. Generika", expanded=False):
-            brand_share = st.slider("Viagra Connect Anteil OTC (%)", 15, 70, _d["brand_share"], key="sil_brand") / 100
-            brand_erosion = st.slider("Markenanteil-Erosion p.a. (Pp.)", 0, 10, 3, key="sil_berosion") / 100
-            brand_premium = st.slider("Preispremium Marke (x)", 1.0, 3.0, 1.8, 0.1, key="sil_bprem")
-
-    # ─── Build params ──────────────────────────────────────────────
-    # Scenario sets slider defaults; all values come from sliders.
-    # User can fine-tune after selecting a scenario.
-
+    # --- Build params --------------------------------------------------
     channels = [
         ChannelParams(name="Stationaere Apotheke", share_of_otc=ch_apo / 100,
                       share_trend_annual=-online_growth, margin_pct=0.42,
@@ -169,13 +161,13 @@ def show():
     ]
 
     params = SildenafilOtcParams(
-        rx_packs_per_month=rx_packs,
+        rx_tablets_per_month=rx_tablets,
         rx_price_brand=rx_price_brand,
         rx_price_generic=rx_price_generic,
         rx_brand_share=rx_brand_share,
         rx_decline_rate=rx_decline,
         otc_price_per_tablet=otc_price,
-        otc_peak_packs_per_month=otc_peak,
+        otc_peak_tablets_per_month=otc_peak,
         otc_ramp_months=otc_ramp,
         new_patient_share=new_patient,
         brand_otc_share=brand_share,
@@ -183,23 +175,23 @@ def show():
         brand_price_premium=brand_premium,
         channels=channels,
         marketing_monthly_eur=_d["mktg"],
-        tadalafil_rx_monthly=tada_monthly,
+        tadalafil_rx_tablets_monthly=tada_monthly,
         tadalafil_switch_to_sildenafil_otc=tada_switch,
     )
 
     df = forecast_sildenafil_otc(params)
     kpis = calculate_kpis_sildenafil(df)
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # HEADER
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     st.markdown(f"## Sildenafil Rx-to-OTC Switch Forecast")
     st.markdown(f"*Viatris / Viagra Connect – Szenario: **{scenario}** | "
                 f"Dual-Channel Apotheken-Modell (apothekenpflichtig)*")
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # KPI CARDS (Row 1)
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown(f"""<div class="kpi-card-teal">
@@ -215,14 +207,14 @@ def show():
         </div>""", unsafe_allow_html=True)
     with c3:
         co_rev = kpis.get("crossover_month")
-        co_packs = kpis.get("crossover_month_packs")
-        co_text = f"M{co_rev} / M{co_packs}" if co_rev and co_packs else (
+        co_tabs = kpis.get("crossover_month_tablets")
+        co_text = f"M{co_rev} / M{co_tabs}" if co_rev and co_tabs else (
             f"Monat {co_rev}" if co_rev else "–"
         )
         st.markdown(f"""<div class="kpi-card-amber">
             <div class="kpi-label">OTC > Rx ab</div>
             <div class="kpi-value">{co_text}</div>
-            <div class="kpi-sublabel">Umsatz / Packungen</div>
+            <div class="kpi-sublabel">Umsatz / Tabletten</div>
         </div>""", unsafe_allow_html=True)
     with c4:
         st.markdown(f"""<div class="kpi-card-green">
@@ -260,33 +252,33 @@ def show():
 
     st.markdown("---")
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # CHARTS
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
 
-    # ─── Chart 1: Dual Channel (Rx vs OTC packs) ──────────────────
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Rx vs. OTC", "Apothekenverteilung", "Brand vs. Generika",
         "Treatment Gap", "Profitabilitaet"
     ])
 
+    # --- Chart 1: Rx vs OTC tablets + revenue -------------------------
     with tab1:
         fig1 = go.Figure()
         fig1.add_trace(go.Scatter(
-            x=df["month"], y=df["rx_packs"], name="Rx Packungen",
+            x=df["month"], y=df["rx_tablets"], name="Rx Tabletten",
             line=dict(color=BLUE, width=2.5),
         ))
         fig1.add_trace(go.Scatter(
-            x=df["month"], y=df["otc_packs"], name="OTC Packungen",
+            x=df["month"], y=df["otc_tablets"], name="OTC Tabletten",
             line=dict(color=TEAL, width=2.5),
         ))
-        if kpis["crossover_month_packs"]:
-            fig1.add_vline(x=kpis["crossover_month_packs"], line_dash="dot",
+        if kpis["crossover_month_tablets"]:
+            fig1.add_vline(x=kpis["crossover_month_tablets"], line_dash="dot",
                            line_color=AMBER,
-                           annotation_text=f"OTC > Rx (M{kpis['crossover_month_packs']})")
+                           annotation_text=f"OTC > Rx (M{kpis['crossover_month_tablets']})")
         fig1.update_layout(
-            title="Rx vs. OTC Packungen/Monat",
-            xaxis_title="Monate nach Switch", yaxis_title="Packungen",
+            title="Rx vs. OTC Tabletten/Monat",
+            xaxis_title="Monate nach Switch", yaxis_title="Tabletten",
             yaxis_tickformat=",", height=420,
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
         )
@@ -315,25 +307,25 @@ def show():
         )
         st.plotly_chart(fig1b, width="stretch")
 
-    # ─── Chart 2: Omnichannel ─────────────────────────────────────
+    # --- Chart 2: Omnichannel -----------------------------------------
     with tab2:
         col_a, col_b = st.columns(2)
 
         with col_a:
             fig2 = go.Figure()
             fig2.add_trace(go.Scatter(
-                x=df["month"], y=df["ch_apotheke_packs"],
+                x=df["month"], y=df["ch_apotheke_tablets"],
                 name="Stationaere Apotheke", stackgroup="one",
                 line=dict(color=BLUE),
             ))
             fig2.add_trace(go.Scatter(
-                x=df["month"], y=df["ch_online_packs"],
+                x=df["month"], y=df["ch_online_tablets"],
                 name="Online-Apotheke", stackgroup="one",
                 line=dict(color=TEAL),
             ))
             fig2.update_layout(
                 title="OTC-Volumen nach Vertriebskanal",
-                xaxis_title="Monate", yaxis_title="Packungen",
+                xaxis_title="Monate", yaxis_title="Tabletten",
                 yaxis_tickformat=",", height=400,
                 legend=dict(orientation="h", yanchor="bottom", y=1.02),
             )
@@ -378,25 +370,25 @@ def show():
         )
         st.plotly_chart(fig2c, width="stretch")
 
-    # ─── Chart 3: Brand vs Generic ────────────────────────────────
+    # --- Chart 3: Brand vs Generic ------------------------------------
     with tab3:
         col_c, col_d = st.columns(2)
 
         with col_c:
             fig3 = go.Figure()
             fig3.add_trace(go.Scatter(
-                x=df["month"], y=df["otc_brand_packs"],
+                x=df["month"], y=df["otc_brand_tablets"],
                 name="Viagra Connect (Marke)", stackgroup="one",
                 line=dict(color="#1e40af"),
             ))
             fig3.add_trace(go.Scatter(
-                x=df["month"], y=df["otc_generic_packs"],
+                x=df["month"], y=df["otc_generic_tablets"],
                 name="Generika OTC", stackgroup="one",
                 line=dict(color="#94a3b8"),
             ))
             fig3.update_layout(
                 title="OTC-Volumen: Marke vs. Generika",
-                xaxis_title="Monate", yaxis_title="Packungen",
+                xaxis_title="Monate", yaxis_title="Tabletten",
                 yaxis_tickformat=",", height=400,
                 legend=dict(orientation="h", yanchor="bottom", y=1.02),
             )
@@ -437,21 +429,19 @@ def show():
         ))
         fig3c.update_layout(
             title="OTC-Volumen Herkunft (Woher kommen die Patienten?)",
-            xaxis_title="Monate", yaxis_title="Packungen",
+            xaxis_title="Monate", yaxis_title="Tabletten",
             yaxis_tickformat=",", height=400,
             legend=dict(orientation="h", yanchor="bottom", y=1.02),
         )
         st.plotly_chart(fig3c, width="stretch")
 
-    # ─── Chart 4: Treatment Gap ───────────────────────────────────
+    # --- Chart 4: Treatment Gap ---------------------------------------
     with tab4:
-        # Compute monthly treated/untreated absolute numbers
         treated_monthly = df["treatment_rate_effective"] * params.ed_prevalence_men
         untreated_monthly = params.ed_prevalence_men - treated_monthly
 
         col_tg1, col_tg2 = st.columns(2)
 
-        # Left: stacked bar – absolute numbers (treated vs. untreated)
         with col_tg1:
             fig_tg_abs = go.Figure()
             fig_tg_abs.add_trace(go.Bar(
@@ -473,7 +463,6 @@ def show():
             )
             st.plotly_chart(fig_tg_abs, width="stretch")
 
-        # Right: treatment rate over time
         with col_tg2:
             fig_tg_rate = go.Figure()
             fig_tg_rate.add_trace(go.Scatter(
@@ -491,7 +480,7 @@ def show():
             )
             st.plotly_chart(fig_tg_rate, width="stretch")
 
-    # ─── Chart 5: Profitability ───────────────────────────────────
+    # --- Chart 5: Profitability ---------------------------------------
     with tab5:
         fig6 = go.Figure()
         fig6.add_trace(go.Scatter(
@@ -527,18 +516,18 @@ def show():
         )
         st.plotly_chart(fig6b, width="stretch")
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # SCENARIO COMPARISON TABLE
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     st.markdown("---")
     st.markdown("### Szenario-Vergleich")
 
     scenarios = {
-        "Konservativ": {"otc_peak_packs_per_month": 200_000, "otc_ramp_months": 24,
+        "Konservativ": {"otc_peak_tablets_per_month": 1_200_000, "otc_ramp_months": 24,
                         "marketing_monthly_eur": 300_000, "new_patient_share": 0.55,
                         "rx_decline_rate": 0.12, "brand_otc_share": 0.20},
         "Base Case": {},
-        "Optimistisch": {"otc_peak_packs_per_month": 450_000, "otc_ramp_months": 12,
+        "Optimistisch": {"otc_peak_tablets_per_month": 2_700_000, "otc_ramp_months": 12,
                          "marketing_monthly_eur": 750_000, "new_patient_share": 0.70,
                          "rx_decline_rate": 0.05, "brand_otc_share": 0.35},
     }
@@ -555,17 +544,17 @@ def show():
             "Online M24": f"{k['online_share_m24']:.0%}",
             "Marke M12": f"{k['brand_share_m12']:.0%}",
             "Crossover (Umsatz)": f"M{k['crossover_month']}" if k['crossover_month'] else "–",
-            "Crossover (Pack.)": f"M{k['crossover_month_packs']}" if k['crossover_month_packs'] else "–",
+            "Crossover (Tabl.)": f"M{k['crossover_month_tablets']}" if k['crossover_month_tablets'] else "–",
         })
 
     st.dataframe(pd.DataFrame(comp_rows).set_index("Szenario"), width=900)
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # METHODOLOGY
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     with st.expander("Methodik & Datenquellen"):
         st.markdown("""
-        **Modell-Architektur:** Dual-Channel Rx/OTC mit Apothekenverteilung
+        **Modell-Architektur:** Dual-Channel Rx/OTC mit Apothekenverteilung. Alle Volumina in Tabletten (1 Tabl. = 1 Anwendung = 50mg).
 
         | Komponente | Methodik | Referenz |
         |---|---|---|

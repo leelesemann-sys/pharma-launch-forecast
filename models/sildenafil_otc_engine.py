@@ -2,14 +2,15 @@
 Sildenafil Rx-to-OTC Switch Forecast Engine (Viatris / Viagra)
 ================================================================
 Advanced Rx-to-OTC model with omnichannel distribution modeling.
+All volumes in TABLETS (1 tablet = 1 application, 50mg).
 
 Key differences vs. generic PPI switch model (Use Case 3):
-  - Patient already pays 100% Rx (ED not covered by GKV) → low price friction
+  - Patient already pays 100% Rx (ED not covered by GKV) -> low price friction
   - Massive treatment gap: ~70% of ED patients never see a doctor (shame barrier)
-  - OTC removes stigma barrier → huge market expansion (UK ref: 63% new patients)
+  - OTC removes stigma barrier -> huge market expansion (UK ref: 63% new patients)
   - Apothekenpflichtig: stationaere Apotheke vs. Online-Apotheke
   - Brand premium: Viagra vs. generic sildenafil OTC pricing power
-  - Competitor dynamics: Tadalafil (Cialis) remains Rx-only → competitive moat
+  - Competitor dynamics: Tadalafil (Cialis) remains Rx-only -> competitive moat
 
 Reference case: UK Viagra Connect (launched March 2018)
   - 50mg OTC, pharmacy-only, GBP 5/tablet
@@ -25,7 +26,7 @@ Epidemiology (Germany):
 
 Market data (Germany):
   - ~2.6M PDE5 packs/year; Sildenafil 55-65% share
-  - Viagra brand: ~10% of sildenafil packs (rest generics)
+  - Viagra brand: ~10% of sildenafil volume (rest generics)
   - Generic Rx: EUR 0.95-2.30/tablet; Viagra brand: EUR 8-14/tablet
   - BfArM SVA rejected 3x (2022, 2023, 2025) but BMG wants switch
 
@@ -33,8 +34,8 @@ Key sources:
   - Arnold M (2023). Public-Health-Impact eines moeglichen OTC-Switches von
     Sildenafil 50 mg. Hauptstadtkongress Berlin, inav-Gutachten (Viatris).
   - Lee et al. (2021). UK real-world study, n=1,162 (PMC)
-  - Braun et al. (2000). Cologne Male Survey – ED prevalence DE
-  - May et al. (2007). Cottbus Survey, n=10,000 – treatment rate ~30%
+  - Braun et al. (2000). Cologne Male Survey -- ED prevalence DE
+  - May et al. (2007). Cottbus Survey, n=10,000 -- treatment rate ~30%
   - Capogrosso et al. (2013). 1 in 4 new ED patients <40 years
   - MHRA (2017). Public Assessment Report Viagra Connect BTC reclassification
   - Gordijn et al. (2022). NI pharmacy consultations for OTC sildenafil
@@ -46,9 +47,9 @@ import numpy as np
 import pandas as pd
 
 
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 # CHANNEL DEFINITIONS
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 
 @dataclass
 class ChannelParams:
@@ -62,59 +63,62 @@ class ChannelParams:
     discretion_factor: float = 0.8       # 1.0 = max discretion, affects stigma-driven demand
 
 
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 # MAIN MODEL PARAMETERS
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 
 @dataclass
 class SildenafilOtcParams:
-    """Parameters for Sildenafil Rx-to-OTC switch forecast."""
+    """Parameters for Sildenafil Rx-to-OTC switch forecast.
 
-    # ─── Product ────────────────────────────────────────────────
+    All volumes are in TABLETS (1 tablet = 1 application = 50mg sildenafil).
+    Prices are per tablet. Revenue = tablets x price_per_tablet.
+    """
+
+    # --- Product ------------------------------------------------
     product_name: str = "Viagra Connect 50mg"
     company: str = "Viatris"
     molecule: str = "Sildenafil"
     otc_dosage: str = "50mg"
     switch_year: int = 2027  # hypothetical switch date
 
-    # ─── Epidemiology ───────────────────────────────────────────
+    # --- Epidemiology -------------------------------------------
     ed_prevalence_men: int = 5_000_000     # men with moderate-to-complete ED (DE)
     treatment_rate: float = 0.30           # currently treated (May et al. 2007; Arnold 2023)
     addressable_otc_pct: float = 0.14      # % of untreated who would buy OTC in steady state
 
-    # ─── Rx channel (pre-switch) ────────────────────────────────
-    rx_packs_per_month: int = 217_000      # sildenafil Rx packs/month (65% of ~2.6M/yr ÷ 12)
-    rx_price_brand: float = 11.19          # Viagra brand per tablet (50mg, 4er)
+    # --- Rx channel (pre-switch) --------------------------------
+    # 217K packs/month x 4 tablets/pack = 868K tablets/month
+    rx_tablets_per_month: int = 868_000    # sildenafil Rx tablets/month
+    rx_price_brand: float = 11.19          # Viagra brand per tablet (50mg)
     rx_price_generic: float = 1.50         # average generic per tablet
-    rx_brand_share: float = 0.10           # Viagra brand % of sildenafil packs
-    rx_avg_pack_size: int = 4              # typical pack size
+    rx_brand_share: float = 0.10           # Viagra brand % of sildenafil volume
     rx_decline_rate: float = 0.08          # surprisingly low: UK showed Rx INCREASED
     rx_decline_months: int = 36            # slow decline (some patients prefer Rx relationship)
 
-    # ─── OTC channel ────────────────────────────────────────────
+    # --- OTC channel --------------------------------------------
     otc_price_per_tablet: float = 5.99     # Viagra Connect OTC per tablet
-    otc_pack_sizes: list = field(default_factory=lambda: [4, 8, 12])
-    otc_avg_pack_size: int = 6             # weighted average
-    otc_peak_packs_per_month: int = 350_000  # peak OTC packs/month (all channels)
+    # 350K packs/month x 6 tablets/pack = 2.1M tablets/month
+    otc_peak_tablets_per_month: int = 2_100_000  # peak OTC tablets/month (all channels)
     otc_ramp_months: int = 18              # months to reach peak
 
-    # ─── Market expansion (the core thesis) ─────────────────────
+    # --- Market expansion (the core thesis) ---------------------
     new_patient_share: float = 0.63        # UK reference: 63% were new-to-therapy
-    stigma_reduction_factor: float = 0.40  # OTC removes stigma → 40% of barrier gone
+    stigma_reduction_factor: float = 0.40  # OTC removes stigma -> 40% of barrier gone
     # Treatment gap closure rate (how many untreated men start buying OTC)
     treatment_gap_closure_rate: float = 0.08  # 8% of untreated switch to OTC over 5 years
 
-    # ─── Brand vs. Generic OTC ──────────────────────────────────
+    # --- Brand vs. Generic OTC ----------------------------------
     brand_otc_share: float = 0.25          # Viagra Connect vs generic OTC sildenafil
     brand_otc_share_trend: float = -0.04   # annual erosion from generic OTC entrants
     brand_price_premium: float = 1.8       # brand is 1.8x generic OTC price
 
-    # ─── Price dynamics ─────────────────────────────────────────
+    # --- Price dynamics -----------------------------------------
     price_elasticity: float = -0.5         # lower than PPI: ED patients less price-sensitive
     price_trend_annual: float = -0.03      # generic competition drives prices down
     # Note: lower elasticity because patients already pay 100% for Rx
 
-    # ─── Omnichannel distribution ───────────────────────────────
+    # --- Omnichannel distribution -------------------------------
     # Sildenafil OTC would be apothekenpflichtig (pharmacy-only) in DE,
     # like UK Viagra Connect.  No Drogerie/Supermarkt channel.
     channels: list = field(default_factory=lambda: [
@@ -138,37 +142,38 @@ class SildenafilOtcParams:
         ),
     ])
 
-    # ─── Competitor (Tadalafil stays Rx) ────────────────────────
-    tadalafil_rx_monthly: int = 120_000    # Tadalafil Rx packs/month
+    # --- Competitor (Tadalafil stays Rx) ------------------------
+    # 120K packs/month x 4 tablets/pack = 480K tablets/month
+    tadalafil_rx_tablets_monthly: int = 480_000  # Tadalafil Rx tablets/month
     tadalafil_switch_to_sildenafil_otc: float = 0.12  # % Tadalafil users switching to OTC Sildenafil
     tadalafil_migration_months: int = 24
 
-    # ─── Seasonality (ED: less seasonal than PPI) ───────────────
+    # --- Seasonality (ED: less seasonal than PPI) ---------------
     seasonality: list = field(default_factory=lambda: [
         0.90, 1.05, 1.00, 1.00, 1.05, 1.10,   # Jan-Jun (Feb=Valentine's, Jun=summer)
         1.05, 1.00, 0.95, 0.95, 0.95, 1.00,    # Jul-Dec
     ])
 
-    # ─── Marketing ────────────────────────────────────────────────
+    # --- Marketing ----------------------------------------------
     marketing_monthly_eur: float = 500_000   # DTC brand building, cost only (no volume effect)
     marketing_maintenance_factor: float = 0.5  # reduce to 50% after ramp phase
     marketing_ramp_months: int = 18            # full spend for first 18 months, then maintenance
 
-    # ─── Consumer funnel ────────────────────────────────────────
+    # --- Consumer funnel ----------------------------------------
     trial_rate: float = 0.25                 # % of aware men with ED who try OTC
     repeat_rate: float = 0.65               # higher than PPI: chronic/recurring condition
 
-    # ─── Costs ──────────────────────────────────────────────────
+    # --- Costs --------------------------------------------------
     cogs_pct: float = 0.12                   # low COGS for established molecule
     # Channel-specific margins are in ChannelParams
 
-    # ─── Forecast ───────────────────────────────────────────────
+    # --- Forecast -----------------------------------------------
     forecast_months: int = 60
 
 
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 # MATHEMATICAL PRIMITIVES
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 
 def _logistic(t: float, peak: float, midpoint: float, steepness: float) -> float:
     """Generic logistic S-curve."""
@@ -176,7 +181,7 @@ def _logistic(t: float, peak: float, midpoint: float, steepness: float) -> float
 
 
 def _otc_ramp(month: int, peak: int, ramp_months: int) -> float:
-    """Logistic ramp for OTC volume."""
+    """Logistic ramp for OTC volume (tablets)."""
     if ramp_months <= 0:
         return float(peak)
     midpoint = ramp_months * 0.45
@@ -198,9 +203,9 @@ def _channel_share(base_share: float, trend: float, month: int) -> float:
     return max(0.0, min(1.0, base_share + trend * (month / 12.0)))
 
 
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 # FORECAST ENGINE
-# ═══════════════════════════════════════════════════════════════════
+# ===================================================================
 
 def forecast_sildenafil_otc(
     params: SildenafilOtcParams,
@@ -208,8 +213,11 @@ def forecast_sildenafil_otc(
 ) -> pd.DataFrame:
     """Run the Sildenafil Rx-to-OTC switch forecast with omnichannel modeling.
 
+    All volumes are in TABLETS (1 tablet = 1 application).
+    Revenue = tablets x price_per_tablet (no pack_size conversion needed).
+
     Returns DataFrame with monthly data including:
-    - Rx channel performance
+    - Rx channel performance (tablets + revenue)
     - OTC channel by distribution channel (Apotheke, Online)
     - Brand vs. generic OTC split
     - Tadalafil migration
@@ -228,36 +236,36 @@ def forecast_sildenafil_otc(
         season_idx = (m - 1) % 12
         season_factor = params.seasonality[season_idx]
 
-        # ─── Rx Channel ────────────────────────────────────────
-        rx_packs = _rx_effect(
-            m, params.rx_packs_per_month,
+        # --- Rx Channel ----------------------------------------
+        rx_tablets = _rx_effect(
+            m, params.rx_tablets_per_month,
             params.rx_decline_rate, params.rx_decline_months
         )
-        # Weighted average Rx price
+        # Weighted average Rx price per tablet
         rx_avg_price = (
-            params.rx_brand_share * params.rx_price_brand * params.rx_avg_pack_size +
-            (1 - params.rx_brand_share) * params.rx_price_generic * params.rx_avg_pack_size
+            params.rx_brand_share * params.rx_price_brand +
+            (1 - params.rx_brand_share) * params.rx_price_generic
         )
-        rx_revenue = rx_packs * rx_avg_price
+        rx_revenue = rx_tablets * rx_avg_price
 
-        # ─── OTC Volume (total) ────────────────────────────────
-        otc_base = _otc_ramp(m, params.otc_peak_packs_per_month, params.otc_ramp_months)
+        # --- OTC Volume (total, in tablets) --------------------
+        otc_base = _otc_ramp(m, params.otc_peak_tablets_per_month, params.otc_ramp_months)
         otc_seasonal = otc_base * season_factor
 
         # Price effect
         price_change = params.price_trend_annual * year_frac
         price_vol_effect = 1.0 + (price_change * params.price_elasticity)
-        otc_total_packs = max(0, otc_seasonal * price_vol_effect)
+        otc_total_tablets = max(0, otc_seasonal * price_vol_effect)
 
-        # ─── Tadalafil migration bonus ─────────────────────────
+        # --- Tadalafil migration bonus -------------------------
         tada_migration = _logistic(
-            m, params.tadalafil_rx_monthly * params.tadalafil_switch_to_sildenafil_otc,
+            m, params.tadalafil_rx_tablets_monthly * params.tadalafil_switch_to_sildenafil_otc,
             params.tadalafil_migration_months * 0.5,
             6.0 / params.tadalafil_migration_months
         )
-        otc_total_packs += tada_migration
+        otc_total_tablets += tada_migration
 
-        # ─── Omnichannel distribution ──────────────────────────
+        # --- Omnichannel distribution --------------------------
         # Calculate share for each channel with time evolution
         raw_shares = []
         for ch in params.channels:
@@ -271,7 +279,7 @@ def forecast_sildenafil_otc(
         total_otc_retail_revenue = 0.0
 
         # Apply discretion bonus to channel weights, then re-normalize
-        # so total volume stays at otc_total_packs (bonus shifts mix, not inflates)
+        # so total volume stays at otc_total_tablets (bonus shifts mix, not inflates)
         weighted_shares = []
         for i, ch in enumerate(params.channels):
             discretion_bonus = 1.0 + (ch.discretion_factor - 0.7) * 0.15
@@ -286,9 +294,10 @@ def forecast_sildenafil_otc(
 
         for i, ch in enumerate(params.channels):
             ch_share = disc_shares[i]
-            ch_packs = otc_total_packs * ch_share
+            ch_tablets = otc_total_tablets * ch_share
 
-            ch_retail_rev = ch_packs * otc_price_now * params.otc_avg_pack_size
+            # Revenue = tablets x price_per_tablet (direct, no pack_size)
+            ch_retail_rev = ch_tablets * otc_price_now
 
             # Manufacturer revenue = retail - channel margin - distribution
             mfr_share = 1.0 - ch.margin_pct - ch.distribution_cost_pct
@@ -298,51 +307,47 @@ def forecast_sildenafil_otc(
             total_otc_manufacturer_revenue += ch_mfr_rev
 
             channel_data[ch.name] = {
-                "packs": round(ch_packs),
+                "tablets": round(ch_tablets),
                 "share": ch_share,
                 "retail_revenue": round(ch_retail_rev),
                 "manufacturer_revenue": round(ch_mfr_rev),
             }
 
-        otc_total_packs_adj = round(otc_total_packs)
+        otc_total_tablets_adj = round(otc_total_tablets)
 
-        # ─── Brand vs. Generic OTC ─────────────────────────────
+        # --- Brand vs. Generic OTC -----------------------------
         brand_share = max(0.10, params.brand_otc_share + params.brand_otc_share_trend * year_frac)
-        otc_brand_packs = otc_total_packs_adj * brand_share
-        otc_generic_packs = otc_total_packs_adj * (1 - brand_share)
+        otc_brand_tablets = otc_total_tablets_adj * brand_share
+        otc_generic_tablets = otc_total_tablets_adj * (1 - brand_share)
 
         # Brand premium: Viagra Connect sells at a premium vs. generic OTC.
         generic_price = otc_price_now
         brand_price = otc_price_now * params.brand_price_premium
-        # Weighted average revenue: brand packs × brand price + generic packs × generic price
-        brand_rev_bonus = (
-            otc_brand_packs * (brand_price - generic_price) * params.otc_avg_pack_size
-        )
+        # Brand revenue bonus = brand tablets x price delta (direct, no pack_size)
+        brand_rev_bonus = otc_brand_tablets * (brand_price - generic_price)
         # Apply average manufacturer share across channels
         avg_mfr_pct = total_otc_manufacturer_revenue / total_otc_retail_revenue if total_otc_retail_revenue > 0 else 0.52
         total_otc_manufacturer_revenue += brand_rev_bonus * avg_mfr_pct
         total_otc_retail_revenue += brand_rev_bonus
 
-        # ─── Volume decomposition ──────────────────────────────
+        # --- Volume decomposition ------------------------------
         # Tadalafil migration is a known absolute volume; allocate the
         # remainder between new patients and Rx migration using the
         # new_patient_share ratio so the parts always sum to total.
-        otc_from_tadalafil = min(tada_migration, otc_total_packs_adj)
-        otc_excl_tada = otc_total_packs_adj - otc_from_tadalafil
+        otc_from_tadalafil = min(tada_migration, otc_total_tablets_adj)
+        otc_excl_tada = otc_total_tablets_adj - otc_from_tadalafil
         otc_from_new_patients = otc_excl_tada * params.new_patient_share
         otc_from_rx_migration = otc_excl_tada * (1 - params.new_patient_share)
 
-        # ─── Tablets for comparison ─────────────────────────────
-        rx_tablets = rx_packs * params.rx_avg_pack_size
-        otc_tablets = otc_total_packs_adj * params.otc_avg_pack_size
-        total_tablets = rx_tablets + otc_tablets
+        # --- Total tablets -------------------------------------
+        total_tablets = rx_tablets + otc_total_tablets_adj
 
-        # ─── Marketing (cost only, no volume effect) ─────────────
+        # --- Marketing (cost only, no volume effect) -----------
         marketing_spend = params.marketing_monthly_eur
         if m > params.marketing_ramp_months:
             marketing_spend *= params.marketing_maintenance_factor
 
-        # ─── Profitability ──────────────────────────────────────
+        # --- Profitability -------------------------------------
         total_revenue = rx_revenue + total_otc_manufacturer_revenue
         cogs = total_revenue * params.cogs_pct
         gross_profit = total_revenue - cogs
@@ -354,7 +359,7 @@ def forecast_sildenafil_otc(
         cum["profit"] += operating_profit
         cum["marketing"] += marketing_spend
 
-        # ─── Treatment gap metric ──────────────────────────────
+        # --- Treatment gap metric ------------------------------
         untreated = params.ed_prevalence_men * (1 - params.treatment_rate)
         # Linear ramp over 36 months, capped at closure_rate
         ramp_frac = min(1.0, m / 36)
@@ -368,31 +373,29 @@ def forecast_sildenafil_otc(
             "date": pd.Timestamp(params.switch_year, 1, 1) + pd.DateOffset(months=m - 1),
 
             # Rx
-            "rx_packs": round(rx_packs),
-            "rx_revenue": round(rx_revenue),
             "rx_tablets": round(rx_tablets),
+            "rx_revenue": round(rx_revenue),
 
             # OTC total
-            "otc_packs": round(otc_total_packs_adj),
+            "otc_tablets": round(otc_total_tablets_adj),
             "otc_price_per_tablet": round(otc_price_now, 2),
             "otc_retail_revenue": round(total_otc_retail_revenue),
             "otc_manufacturer_revenue": round(total_otc_manufacturer_revenue),
-            "otc_tablets": round(otc_tablets),
 
             # OTC by channel (apothekenpflichtig: Apotheke + Online only)
-            "ch_apotheke_packs": channel_data.get(params.channels[0].name, {}).get("packs", 0) if len(params.channels) > 0 else 0,
+            "ch_apotheke_tablets": channel_data.get(params.channels[0].name, {}).get("tablets", 0) if len(params.channels) > 0 else 0,
             "ch_apotheke_revenue": channel_data.get(params.channels[0].name, {}).get("manufacturer_revenue", 0) if len(params.channels) > 0 else 0,
             "ch_apotheke_share": channel_data.get(params.channels[0].name, {}).get("share", 0) if len(params.channels) > 0 else 0,
-            "ch_online_packs": channel_data.get(params.channels[1].name, {}).get("packs", 0) if len(params.channels) > 1 else 0,
+            "ch_online_tablets": channel_data.get(params.channels[1].name, {}).get("tablets", 0) if len(params.channels) > 1 else 0,
             "ch_online_revenue": channel_data.get(params.channels[1].name, {}).get("manufacturer_revenue", 0) if len(params.channels) > 1 else 0,
             "ch_online_share": channel_data.get(params.channels[1].name, {}).get("share", 0) if len(params.channels) > 1 else 0,
 
             # Brand vs Generic OTC
-            "otc_brand_packs": round(otc_brand_packs),
-            "otc_generic_packs": round(otc_generic_packs),
+            "otc_brand_tablets": round(otc_brand_tablets),
+            "otc_generic_tablets": round(otc_generic_tablets),
             "otc_brand_share": brand_share,
 
-            # Volume decomposition
+            # Volume decomposition (all in tablets)
             "otc_from_new_patients": round(otc_from_new_patients),
             "otc_from_rx_migration": round(otc_from_rx_migration),
             "otc_from_tadalafil": round(otc_from_tadalafil),
@@ -400,7 +403,7 @@ def forecast_sildenafil_otc(
             # Combined
             "total_tablets": round(total_tablets),
             "total_revenue": round(total_revenue),
-            "otc_share_tablets": otc_tablets / total_tablets if total_tablets > 0 else 0,
+            "otc_share_tablets": otc_total_tablets_adj / total_tablets if total_tablets > 0 else 0,
 
             # Seasonality
             "season_factor": season_factor,
@@ -431,22 +434,22 @@ def calculate_kpis_sildenafil(df: pd.DataFrame) -> dict:
     last = df.iloc[-1]
     y1 = df[df["month"] <= 12]
 
-    # Crossover month – revenue (OTC mfr revenue > Rx revenue)
+    # Crossover month -- revenue (OTC mfr revenue > Rx revenue)
     crossover = df[df["otc_manufacturer_revenue"] > df["rx_revenue"]]
     crossover_month = int(crossover.iloc[0]["month"]) if len(crossover) > 0 else None
 
-    # Crossover month – packs (OTC packs > Rx packs)
-    crossover_packs = df[df["otc_packs"] > df["rx_packs"]]
-    crossover_month_packs = int(crossover_packs.iloc[0]["month"]) if len(crossover_packs) > 0 else None
+    # Crossover month -- tablets (OTC tablets > Rx tablets)
+    crossover_tabs = df[df["otc_tablets"] > df["rx_tablets"]]
+    crossover_month_tablets = int(crossover_tabs.iloc[0]["month"]) if len(crossover_tabs) > 0 else None
 
     # Peak OTC
-    peak_idx = df["otc_packs"].idxmax()
-    peak_otc_packs = int(df.loc[peak_idx, "otc_packs"])
+    peak_idx = df["otc_tablets"].idxmax()
+    peak_otc_tablets = int(df.loc[peak_idx, "otc_tablets"])
     peak_otc_month = int(df.loc[peak_idx, "month"])
 
     # Rx decline
-    rx_start = df.iloc[0]["rx_packs"]
-    rx_end = last["rx_packs"]
+    rx_start = df.iloc[0]["rx_tablets"]
+    rx_end = last["rx_tablets"]
     rx_decline_pct = (rx_start - rx_end) / rx_start if rx_start > 0 else 0
 
     # Channel shares at month 12
@@ -467,8 +470,8 @@ def calculate_kpis_sildenafil(df: pd.DataFrame) -> dict:
         "total_5y_profit": last["cumulative_profit"],
         "total_5y_marketing": last["cumulative_marketing"],
         "crossover_month": crossover_month,
-        "crossover_month_packs": crossover_month_packs,
-        "peak_otc_packs": peak_otc_packs,
+        "crossover_month_tablets": crossover_month_tablets,
+        "peak_otc_tablets": peak_otc_tablets,
         "peak_otc_month": peak_otc_month,
         "rx_decline_total": rx_decline_pct,
         "otc_share_m12": float(m12["otc_share_tablets"].iloc[0]) if len(m12) > 0 else 0,

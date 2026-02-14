@@ -99,7 +99,7 @@ def build_model():
     row += 2
     ws.merge_range(row, 1, row, 3, "2. RX-MARKT (vor Switch)", fmt["section"])
     for label, value, fk, hint in [
-        ("Sildenafil Rx Pack./Monat", 217_000, "input", "65% von ~2.6M PDE5 Pack./Jahr ÷ 12"),
+        ("Sildenafil Rx Tabl./Monat", 868_000, "input", "65% von ~2.6M PDE5 Pack./Jahr × 4 Tabl."),
         ("Viagra Preis/Tablette (EUR)", 11.19, "input_eur", "Markenpreis 50mg (4er Pack)"),
         ("Generika Preis/Tablette (EUR)", 1.50, "input_eur", "Durchschnitt (Spanne 0.95-2.30)"),
         ("Viagra Markenanteil (Rx)", 0.10, "input_pct", "~10% der Sildenafil-Packs"),
@@ -113,7 +113,7 @@ def build_model():
     ws.merge_range(row, 1, row, 3, "3. OTC-KANAL", fmt["section"])
     for label, value, fk, hint in [
         ("OTC Preis/Tablette (EUR)", 5.99, "input_eur", "Zwischen UK GBP 5 und Rx-Generika EUR 1.50"),
-        ("OTC Peak Packungen/Monat", 350_000, "input", "Alle Kanaele zusammen"),
+        ("OTC Peak Tabletten/Monat", 2_100_000, "input", "Alle Kanaele zusammen"),
         ("Monate bis Peak", 18, "input", "Ramp-up-Dauer"),
         ("Neue Patienten (% OTC-Vol.)", 0.63, "input_pct", "UK-Referenz: 63% nie vorher behandelt"),
         ("Preiselastizitaet", -0.50, "input_eur", "Niedrig: Patient zahlt ohnehin 100% Rx"),
@@ -160,7 +160,7 @@ def build_model():
     for c, h in enumerate(["Parameter", "Konservativ", "Base Case", "Optimistisch"]):
         ws.write(row, 1 + c, h, fmt["th"])
     for param, cons, base, opti in [
-        ("OTC Peak Pack./Mon.", 200_000, 350_000, 450_000),
+        ("OTC Peak Tabl./Mon.", 1_200_000, 2_100_000, 2_700_000),
         ("OTC Preis/Tablette (EUR)", 4.99, 5.99, 6.99),
         ("Monate bis Peak", 24, 18, 12),
         ("Marketing/Monat (EUR)", 300_000, 500_000, 750_000),
@@ -282,9 +282,9 @@ def build_model():
 
     row += 2
     headers_ch = [
-        "Monat", "Apotheke\nPack.", "Apotheke\nAnteil", "Apotheke\nUmsatz",
-        "Online\nPack.", "Online\nAnteil", "Online\nUmsatz",
-        "Gesamt\nOTC Pack.",
+        "Monat", "Apotheke\nTabl.", "Apotheke\nAnteil", "Apotheke\nUmsatz",
+        "Online\nTabl.", "Online\nAnteil", "Online\nUmsatz",
+        "Gesamt\nOTC Tabl.",
     ]
     for c, h in enumerate(headers_ch):
         ws3.write(row, 1 + c, h, fmt["th_purple"])
@@ -295,13 +295,13 @@ def build_model():
         row += 1
         is_alt = i % 2 == 1
         ws3.write(row, 1, r["month"], fmt["row_alt"] if is_alt else None)
-        ws3.write(row, 2, r["ch_apotheke_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
+        ws3.write(row, 2, r["ch_apotheke_tablets"], fmt["row_alt_num"] if is_alt else fmt["number"])
         ws3.write(row, 3, r["ch_apotheke_share"], fmt["row_alt_pct"] if is_alt else fmt["pct"])
         ws3.write(row, 4, r["ch_apotheke_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
-        ws3.write(row, 5, r["ch_online_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
+        ws3.write(row, 5, r["ch_online_tablets"], fmt["row_alt_num"] if is_alt else fmt["number"])
         ws3.write(row, 6, r["ch_online_share"], fmt["row_alt_pct"] if is_alt else fmt["pct"])
         ws3.write(row, 7, r["ch_online_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
-        ws3.write(row, 8, r["otc_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
+        ws3.write(row, 8, r["otc_tablets"], fmt["row_alt_num"] if is_alt else fmt["number"])
     data_end_ch = row
 
     # Channel chart
@@ -311,7 +311,7 @@ def build_model():
     chart_ch.add_series({"name": "Online", "categories": ["Apothekenverteilung", data_start_ch, 1, data_end_ch, 1],
         "values": ["Apothekenverteilung", data_start_ch, 5, data_end_ch, 5], "fill": {"color": "#0d9488"}})
     chart_ch.set_title({"name": "OTC-Volumen nach Vertriebskanal"})
-    chart_ch.set_y_axis({"name": "Packungen", "num_format": "#,##0"})
+    chart_ch.set_y_axis({"name": "Tabletten", "num_format": "#,##0"})
     chart_ch.set_size({"width": 800, "height": 380})
     chart_ch.set_legend({"position": "bottom"})
     ws3.insert_chart("B" + str(row + 3), chart_ch)
@@ -324,7 +324,7 @@ def build_model():
     ws4.set_tab_color("#0d9488")
     ws4.set_column("A:A", 3)
     ws4.set_column("B:B", 12)
-    ws4.set_column("C:R", 14)
+    ws4.set_column("C:Q", 14)
 
     row = 1
     ws4.merge_range(row, 1, row, 12, "Sildenafil Rx-to-OTC Forecast – Dual Channel (Base Case)", fmt["title"])
@@ -346,10 +346,10 @@ def build_model():
 
     row += 4
     headers = [
-        "Monat", "Rx\nPack.", "Rx\nUmsatz",
-        "OTC\nPack.", "OTC Preis\n/Tab", "OTC Retail\nUmsatz", "OTC Herst.\nUmsatz",
-        "Marke\nPack.", "Generika\nPack.", "Marke\n%",
-        "Awareness", "Saison",
+        "Monat", "Rx\nTabl.", "Rx\nUmsatz",
+        "OTC\nTabl.", "OTC Preis\n/Tab", "OTC Retail\nUmsatz", "OTC Herst.\nUmsatz",
+        "Marke\nTabl.", "Generika\nTabl.", "Marke\n%",
+        "Saison",
         "Gesamt\nUmsatz", "Oper.\nGewinn",
         "Kum.\nUmsatz", "Kum.\nGewinn",
     ]
@@ -362,31 +362,30 @@ def build_model():
         row += 1
         is_alt = i % 2 == 1
         ws4.write(row, 1, r["month"], fmt["row_alt"] if is_alt else None)
-        ws4.write(row, 2, r["rx_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
+        ws4.write(row, 2, r["rx_tablets"], fmt["row_alt_num"] if is_alt else fmt["number"])
         ws4.write(row, 3, r["rx_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
-        ws4.write(row, 4, r["otc_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
+        ws4.write(row, 4, r["otc_tablets"], fmt["row_alt_num"] if is_alt else fmt["number"])
         ws4.write(row, 5, r["otc_price_per_tablet"], fmt["row_alt_eur"] if is_alt else fmt["eur_detail"])
         ws4.write(row, 6, r["otc_retail_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
         ws4.write(row, 7, r["otc_manufacturer_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
-        ws4.write(row, 8, r["otc_brand_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
-        ws4.write(row, 9, r["otc_generic_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
+        ws4.write(row, 8, r["otc_brand_tablets"], fmt["row_alt_num"] if is_alt else fmt["number"])
+        ws4.write(row, 9, r["otc_generic_tablets"], fmt["row_alt_num"] if is_alt else fmt["number"])
         ws4.write(row, 10, r["otc_brand_share"], fmt["row_alt_pct"] if is_alt else fmt["pct"])
-        ws4.write(row, 11, r["awareness"], fmt["row_alt_pct"] if is_alt else fmt["pct"])
-        ws4.write(row, 12, r["season_factor"], fmt["row_alt"] if is_alt else fmt["mult"])
-        ws4.write(row, 13, r["total_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
-        ws4.write(row, 14, r["operating_profit"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
-        ws4.write(row, 15, r["cumulative_total_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
-        ws4.write(row, 16, r["cumulative_profit"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
+        ws4.write(row, 11, r["season_factor"], fmt["row_alt"] if is_alt else fmt["mult"])
+        ws4.write(row, 12, r["total_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
+        ws4.write(row, 13, r["operating_profit"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
+        ws4.write(row, 14, r["cumulative_total_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
+        ws4.write(row, 15, r["cumulative_profit"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
     data_end = row
 
     # Chart: Dual channel packs
     chart1 = wb.add_chart({"type": "line"})
-    chart1.add_series({"name": "Rx Packungen", "categories": ["Forecast", data_start, 1, data_end, 1],
+    chart1.add_series({"name": "Rx Tabletten", "categories": ["Forecast", data_start, 1, data_end, 1],
         "values": ["Forecast", data_start, 2, data_end, 2], "line": {"color": "#2563eb", "width": 2.5}})
-    chart1.add_series({"name": "OTC Packungen", "categories": ["Forecast", data_start, 1, data_end, 1],
+    chart1.add_series({"name": "OTC Tabletten", "categories": ["Forecast", data_start, 1, data_end, 1],
         "values": ["Forecast", data_start, 4, data_end, 4], "line": {"color": "#0d9488", "width": 2.5}})
-    chart1.set_title({"name": "Dual-Kanal: Rx vs. OTC Packungen"})
-    chart1.set_y_axis({"name": "Packungen / Monat", "num_format": "#,##0"})
+    chart1.set_title({"name": "Dual-Kanal: Rx vs. OTC Tabletten"})
+    chart1.set_y_axis({"name": "Tabletten / Monat", "num_format": "#,##0"})
     chart1.set_size({"width": 800, "height": 380})
     chart1.set_legend({"position": "bottom"})
     ws4.insert_chart("B" + str(row + 3), chart1)
@@ -398,7 +397,7 @@ def build_model():
     chart2.add_series({"name": "Generika OTC", "categories": ["Forecast", data_start, 1, data_end, 1],
         "values": ["Forecast", data_start, 9, data_end, 9], "fill": {"color": "#94a3b8"}})
     chart2.set_title({"name": "OTC: Viagra Connect vs. Generika"})
-    chart2.set_y_axis({"name": "Packungen / Monat", "num_format": "#,##0"})
+    chart2.set_y_axis({"name": "Tabletten / Monat", "num_format": "#,##0"})
     chart2.set_size({"width": 800, "height": 380})
     chart2.set_legend({"position": "bottom"})
     ws4.insert_chart("J" + str(row + 3), chart2)
@@ -421,11 +420,11 @@ def build_model():
 
     scenario_results = {}
     for sn, sp in [
-        ("Konservativ", {"otc_peak_packs_per_month": 200_000, "otc_ramp_months": 24,
+        ("Konservativ", {"otc_peak_tablets_per_month": 1_200_000, "otc_ramp_months": 24,
                          "marketing_monthly_eur": 300_000, "new_patient_share": 0.55,
                          "rx_decline_rate": 0.12, "brand_otc_share": 0.35}),
         ("Base Case", {}),
-        ("Optimistisch", {"otc_peak_packs_per_month": 450_000, "otc_ramp_months": 12,
+        ("Optimistisch", {"otc_peak_tablets_per_month": 2_700_000, "otc_ramp_months": 12,
                           "marketing_monthly_eur": 750_000, "new_patient_share": 0.70,
                           "rx_decline_rate": 0.05, "brand_otc_share": 0.50}),
     ]:
@@ -526,7 +525,7 @@ def build_model():
     for c, h in enumerate(["Parameter", "Default", "Begruendung", "Kat."]):
         ws6.write(row, 1 + c, h, fmt["th"])
     assumptions = [
-        ("OTC Peak Vol.", "350K Pack./Mon.", "Hochrechnung: UK + DE-Marktgroesse", "ANNAHME"),
+        ("OTC Peak Vol.", "2.1M Tabl./Mon.", "Hochrechnung: UK + DE-Marktgroesse", "ANNAHME"),
         ("OTC Preis", "EUR 5.99/Tab", "Zwischen UK GBP 5 und Rx-Generika EUR 1.50", "ANNAHME"),
         ("Neue Patienten", "63%", "UK-Referenz: 63% nie vorher behandelt", "ANNAHME"),
         ("Rx-Rueckgang", "8%", "UK: Rx stieg sogar! Konservativ: -8%", "ANNAHME"),
@@ -554,8 +553,7 @@ def build_model():
         ("Discretion-Bonus", "Kanal-Volumen * (1 + (disc-0.7)*0.15)", "ED-Stigma treibt anonyme Kanaele", "MODELL"),
         ("Telemed.-Disruption", "Exp. Decay + Pivot-Retention (15%)", "Zava/GoSpring verlieren Rx-Geschaeft", "MODELL"),
         ("Markenanteil-Erosion", "Linear: -3Pp/Jahr, Floor 15%", "Generikadruck analog UK", "MODELL"),
-        ("Awareness", "S-Kurve mit hoher Baseline (60%)", "Viagra ist bereits hochbekannt", "MODELL"),
-        ("Tadalafil-Migration", "Logistic: 12% der Tada-Packs zu OTC Sild.", "Convenience-Vorteil OTC", "MODELL"),
+        ("Tadalafil-Migration", "Logistic: 12% der Tada-Tabl. zu OTC Sild.", "Convenience-Vorteil OTC", "MODELL"),
     ]
     for name, formula, ref, cat in models:
         row += 1
