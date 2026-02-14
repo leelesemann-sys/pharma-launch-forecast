@@ -220,7 +220,6 @@ def forecast_sildenafil_otc(
     }
 
     for m in range(1, months + 1):
-      try:
         year_frac = m / 12.0
         season_idx = (m - 1) % 12
         season_factor = params.seasonality[season_idx]
@@ -432,12 +431,6 @@ def forecast_sildenafil_otc(
             "treatment_rate_effective": treatment_rate_new,
             "newly_treated_cumulative": round(newly_treated_cumulative),
         })
-      except IndexError as e:
-        raise IndexError(
-            f"Month {m}: {e} | channels={len(params.channels)} "
-            f"names={[c.name for c in params.channels]} "
-            f"seasonality_len={len(params.seasonality)} season_idx={season_idx if 'season_idx' in dir() else '?'}"
-        ) from e
 
     return pd.DataFrame(rows)
 

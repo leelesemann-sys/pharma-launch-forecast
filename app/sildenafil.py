@@ -196,14 +196,18 @@ def show():
         df = forecast_sildenafil_otc(params)
         kpis = calculate_kpis_sildenafil(df)
     except Exception as e:
-        import traceback
+        import traceback, sys
         st.error(f"Engine error: {type(e).__name__}: {e}")
-        st.code(traceback.format_exc())
-        st.json({
-            "channels_count": len(params.channels),
-            "channel_names": [c.name for c in params.channels],
-            "forecast_months": params.forecast_months,
-        })
+        # Show full exception chain
+        full_tb = traceback.format_exception(type(e), e, e.__traceback__)
+        st.code("".join(full_tb))
+        # Show all params as dict
+        from dataclasses import asdict
+        try:
+            st.json(asdict(params))
+        except Exception:
+            st.code(str(params))
+        st.write(f"Python: {sys.version}")
         st.stop()
 
     # ═══════════════════════════════════════════════════════════════════
