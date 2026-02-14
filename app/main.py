@@ -862,6 +862,57 @@ def show():
         st.info("Export enth\u00e4lt beide Perspektiven (Originator + Generika) als separate Tabellenbl\u00e4tter.")
 
 
+    # ─── Methodik & Datenquellen ─────────────────────────────────────────────
+    st.divider()
+    with st.expander("Methodik & Datenquellen"):
+        st.markdown("""
+**Modell-Architektur:** Dual-Perspektive Originator/Generika mit Aut-idem-Substitution, Rabattvertrags-Modellierung und Authorized-Generic-Strategie. Alle Volumina in TRx (Verordnungen).
+
+| Komponente | Methodik | Referenz |
+|---|---|---|
+| Originator-Erosion | Exponentieller Decay: Share(t) = Floor + (Init-Floor) * e^(-k*t*speed) | Standard im Pharma-Forecasting; validiert durch Clopidogrel, Atorvastatin LOEs |
+| Generika-Uptake | Logistische S-Kurve: 1 / (1 + e^(-s*(t-m))) | Rogers Adoption Curve; Standard bei Launch-Forecasts |
+| Aut-idem-Substitution | Lineare Rampe: 0 -> Peak ueber [ramp, full] Monate | Abgeleitet aus G-BA Festbetrags-Timing + Apotheken-Substitutionsverhalten |
+| Tender/Rabattvertrag | Erwartungswert: Sum(Kasse_share * Win_prob) * Ramp | Kein binaeres Modell; gewichteter Durchschnitt ueber Kassen-Portfolio |
+| Preis-Erosion (Generika) | Zusaetzlicher Preisverfall: +0.3%/Monat, Max 15% | Beobachteter Trend in reifen Generika-Maerkten |
+| Authorized Generic (AG) | AG-Anteil: exp. Decay; AG-Discount: exp. Zunahme | Originator-Zweitmarke zur Verteidigung des Generika-Segments |
+| Competitive Ceiling | effective_peak = min(target_peak, segment_peak) | Peak-Share begrenzt durch Gesamtsegment |
+| Marktwachstum | Lineares monatliches Compounding | NOAK-Markt: ~2% p.a. durch Bevoelkerungsalterung |
+
+**Kernannahmen (Default-Werte):**
+
+| Annahme | Modellwert | Faktenbasis |
+|---|---|---|
+| Eliquis Marktanteil | 42% (TRx) | Lauer-Taxe / GKV-Auswertungen 2024 |
+| Eliquis Preis/TRx | EUR 91,50 | Lauer-Taxe, Festbetragslisten |
+| NOAK-Gesamtmarkt | 4,2 Mio. TRx/Monat | IQVIA / GKV-Arzneimittelindex |
+| Originator Boden-Share | 12% | Markentreue bei Small Molecules: 10-15% typisch |
+| Generika-Segment Peak | 55% | Vergleich Clopidogrel (Plavix): 60-70% nach 3 Jahren |
+| Aut-idem Peak-Quote | 75% | Abhaengig von Arzt-Akzeptanz und Festbetrag |
+| Festbetrag-Delay | 6 Monate | G-BA braucht 3-6 Monate fuer Festbetragsgruppe |
+| Generika Preis-Discount | 45% | Marktueblich DE: 30-60% fuer Generika |
+| COGS | 25% | Branchenueblich Small Molecule Generika |
+
+**Regulatorischer Rahmen:**
+- **Aut-idem (SGB V Par.129):** Apotheke darf/muss wirkstoffgleiches Generikum abgeben, sofern Arzt nicht aut-idem ausschliesst
+- **Festbetragsgruppe (G-BA):** Bestimmt Erstattungsobergrenze; typisch 3-6 Monate nach LOE
+- **Rabattvertraege (Par.130a SGB V):** Krankenkassen schliessen Exklusivvertraege mit Generika-Herstellern
+- **Authorized Generic:** Originator lanciert eigenes Generikum unter Zweitmarke zur Segment-Verteidigung
+
+**Datenquellen (alle oeffentlich):**
+- Lauer-Taxe / Festbetragslisten (Eliquis-Preis, Packungsgroessen)
+- IQVIA Pharmamarkt Deutschland (NOAK-Marktvolumen, Marktanteile)
+- GKV-Arzneimittelindex / WIdO (Verordnungsdaten)
+- G-BA Beschluesse Festbetragsgruppen (Festbetrags-Timing, historische Referenzen)
+- BfArM Zulassungsdaten (LOE-Datum, Patentablauf Apixaban)
+- EMA / European Patent Office (Supplementary Protection Certificate)
+- Plavix/Clopidogrel LOE 2009-2012 (Referenz Erosionsdynamik)
+- Atorvastatin (Sortis) LOE 2012 (Referenz Generika-Uptake)
+- ABDA Zahlen, Daten, Fakten 2024 (Apothekenmarkt)
+- GKV-Spitzenverband (Rabattvertrags-Mechanik, Par.130a SGB V)
+- Handelsblatt / Apotheke Adhoc (Marktberichte NOAK-Segment)
+        """)
+
     # ─── Footer ─────────────────────────────────────────────────────────────
     st.divider()
     st.caption(
