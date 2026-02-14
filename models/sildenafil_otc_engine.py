@@ -112,10 +112,12 @@ class SildenafilOtcParams:
     # Note: lower elasticity because patients already pay 100% for Rx
 
     # ─── Omnichannel distribution ───────────────────────────────
+    # Sildenafil OTC would be apothekenpflichtig (pharmacy-only) in DE,
+    # like UK Viagra Connect.  No Drogerie/Supermarkt channel.
     channels: list = field(default_factory=lambda: [
         ChannelParams(
             name="Stationaere Apotheke",
-            share_of_otc=0.50,
+            share_of_otc=0.55,
             share_trend_annual=-0.03,
             margin_pct=0.42,
             distribution_cost_pct=0.06,
@@ -124,21 +126,12 @@ class SildenafilOtcParams:
         ),
         ChannelParams(
             name="Online-Apotheke",
-            share_of_otc=0.40,
-            share_trend_annual=0.04,    # growing channel
+            share_of_otc=0.45,
+            share_trend_annual=0.03,    # growing channel
             margin_pct=0.30,            # lower margin, competitive pricing
             distribution_cost_pct=0.10, # shipping costs
             avg_basket_multiplier=1.15, # cross-sell via recommendation engines
             discretion_factor=1.0,      # maximum: anonymous ordering
-        ),
-        ChannelParams(
-            name="Drogerie-/Supermarkt (falls freiverkaeuflich)",
-            share_of_otc=0.10,
-            share_trend_annual=0.01,
-            margin_pct=0.35,
-            distribution_cost_pct=0.08,
-            avg_basket_multiplier=0.9,
-            discretion_factor=0.50,     # lowest: public checkout
         ),
     ])
 
@@ -238,7 +231,7 @@ def forecast_sildenafil_otc(
 
     Returns DataFrame with monthly data including:
     - Rx channel performance
-    - OTC channel by distribution channel (Apotheke, Online, Drogerie)
+    - OTC channel by distribution channel (Apotheke, Online)
     - Brand vs. generic OTC split
     - Telemedizin disruption
     - Tadalafil migration
@@ -429,16 +422,13 @@ def forecast_sildenafil_otc(
             "otc_manufacturer_revenue": round(total_otc_manufacturer_revenue),
             "otc_tablets": round(otc_tablets),
 
-            # OTC by channel
+            # OTC by channel (apothekenpflichtig: Apotheke + Online only)
             "ch_apotheke_packs": channel_data[params.channels[0].name]["packs"],
             "ch_apotheke_revenue": channel_data[params.channels[0].name]["manufacturer_revenue"],
             "ch_apotheke_share": channel_data[params.channels[0].name]["share"],
             "ch_online_packs": channel_data[params.channels[1].name]["packs"],
             "ch_online_revenue": channel_data[params.channels[1].name]["manufacturer_revenue"],
             "ch_online_share": channel_data[params.channels[1].name]["share"],
-            "ch_drogerie_packs": channel_data[params.channels[2].name]["packs"],
-            "ch_drogerie_revenue": channel_data[params.channels[2].name]["manufacturer_revenue"],
-            "ch_drogerie_share": channel_data[params.channels[2].name]["share"],
 
             # Brand vs Generic OTC
             "otc_brand_packs": round(otc_brand_packs),

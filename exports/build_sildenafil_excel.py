@@ -4,7 +4,7 @@ Build a professional Excel forecast model for the Sildenafil Rx-to-OTC Switch sc
 Sheets:
 1. INPUTS          – All user-configurable parameters (yellow cells)
 2. Marktdaten      – ED market, PDE5 landscape, channel structure, UK reference
-3. Omnichannel     – Channel-level forecast with share evolution
+3. Apothekenverteilung – Channel-level forecast with share evolution
 4. Forecast        – Monthly dual-channel forecast (Rx + OTC)
 5. Dashboard       – Executive summary with scenario comparison
 6. Methodik        – Transparency matrix: Facts vs. Assumptions vs. Models
@@ -123,12 +123,11 @@ def build_model():
         write_input_row(ws, row, label, value, fk, hint)
 
     row += 2
-    ws.merge_range(row, 1, row, 3, "4. OMNICHANNEL-VERTEILUNG", fmt["section"])
+    ws.merge_range(row, 1, row, 3, "4. APOTHEKENVERTEILUNG (apothekenpflichtig)", fmt["section"])
     for label, value, fk, hint in [
-        ("Stationaere Apotheke (%)", 0.50, "input_pct", "Face-to-face, Beratung, Sofortabholung"),
-        ("Online-Apotheke (%)", 0.40, "input_pct", "DocMorris, Shop Apotheke – Anonymitaet!"),
-        ("Drogerie/Sonstige (%)", 0.10, "input_pct", "Nur falls freiverkaeuflich (unwahrscheinlich)"),
-        ("Online-Wachstum p.a. (Pp.)", 0.04, "input_pct", "CAGR OTC Online: 12.6%"),
+        ("Stationaere Apotheke (%)", 0.55, "input_pct", "Face-to-face, Beratung, Sofortabholung"),
+        ("Online-Apotheke (%)", 0.45, "input_pct", "DocMorris, Shop Apotheke – Anonymitaet!"),
+        ("Online-Wachstum p.a. (Pp.)", 0.03, "input_pct", "CAGR OTC Online: 12.6%"),
         ("Apothekenmarge (stationaer)", 0.42, "input_pct", "Freie OTC-Preisgestaltung"),
         ("Online-Marge", 0.30, "input_pct", "Wettbewerbsdruck, niedrigere Kosten"),
     ]:
@@ -267,7 +266,7 @@ def build_model():
     # ═══════════════════════════════════════════════════════════════════
     # SHEET 3: OMNICHANNEL
     # ═══════════════════════════════════════════════════════════════════
-    ws3 = wb.add_worksheet("Omnichannel")
+    ws3 = wb.add_worksheet("Apothekenverteilung")
     ws3.hide_gridlines(2)
     ws3.set_tab_color("#7c3aed")
     ws3.set_column("A:A", 3)
@@ -279,13 +278,12 @@ def build_model():
     kpis = calculate_kpis_sildenafil(df)
 
     row = 1
-    ws3.merge_range(row, 1, row, 10, "Omnichannel-Verteilung – OTC Sildenafil", fmt["title"])
+    ws3.merge_range(row, 1, row, 8, "Apothekenverteilung – OTC Sildenafil (apothekenpflichtig)", fmt["title"])
 
     row += 2
     headers_ch = [
         "Monat", "Apotheke\nPack.", "Apotheke\nAnteil", "Apotheke\nUmsatz",
         "Online\nPack.", "Online\nAnteil", "Online\nUmsatz",
-        "Drogerie\nPack.", "Drogerie\nAnteil", "Drogerie\nUmsatz",
         "Gesamt\nOTC Pack.",
     ]
     for c, h in enumerate(headers_ch):
@@ -303,20 +301,15 @@ def build_model():
         ws3.write(row, 5, r["ch_online_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
         ws3.write(row, 6, r["ch_online_share"], fmt["row_alt_pct"] if is_alt else fmt["pct"])
         ws3.write(row, 7, r["ch_online_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
-        ws3.write(row, 8, r["ch_drogerie_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
-        ws3.write(row, 9, r["ch_drogerie_share"], fmt["row_alt_pct"] if is_alt else fmt["pct"])
-        ws3.write(row, 10, r["ch_drogerie_revenue"], fmt["row_alt_eur"] if is_alt else fmt["eur"])
-        ws3.write(row, 11, r["otc_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
+        ws3.write(row, 8, r["otc_packs"], fmt["row_alt_num"] if is_alt else fmt["number"])
     data_end_ch = row
 
     # Channel chart
     chart_ch = wb.add_chart({"type": "area", "subtype": "stacked"})
-    chart_ch.add_series({"name": "Apotheke", "categories": ["Omnichannel", data_start_ch, 1, data_end_ch, 1],
-        "values": ["Omnichannel", data_start_ch, 2, data_end_ch, 2], "fill": {"color": "#1e3a5f"}})
-    chart_ch.add_series({"name": "Online", "categories": ["Omnichannel", data_start_ch, 1, data_end_ch, 1],
-        "values": ["Omnichannel", data_start_ch, 5, data_end_ch, 5], "fill": {"color": "#0d9488"}})
-    chart_ch.add_series({"name": "Drogerie", "categories": ["Omnichannel", data_start_ch, 1, data_end_ch, 1],
-        "values": ["Omnichannel", data_start_ch, 8, data_end_ch, 8], "fill": {"color": "#d97706"}})
+    chart_ch.add_series({"name": "Apotheke", "categories": ["Apothekenverteilung", data_start_ch, 1, data_end_ch, 1],
+        "values": ["Apothekenverteilung", data_start_ch, 2, data_end_ch, 2], "fill": {"color": "#1e3a5f"}})
+    chart_ch.add_series({"name": "Online", "categories": ["Apothekenverteilung", data_start_ch, 1, data_end_ch, 1],
+        "values": ["Apothekenverteilung", data_start_ch, 5, data_end_ch, 5], "fill": {"color": "#0d9488"}})
     chart_ch.set_title({"name": "OTC-Volumen nach Vertriebskanal"})
     chart_ch.set_y_axis({"name": "Packungen", "num_format": "#,##0"})
     chart_ch.set_size({"width": 800, "height": 380})
@@ -558,7 +551,7 @@ def build_model():
     models = [
         ("OTC-Ramp", "Logistic S-Curve (peak, midpoint, steepness)", "UK Viagra Connect Launch-Kurve", "MODELL"),
         ("Rx-Effekt", "Exp. Decay mit hohem Floor (92%)", "UK: Rx stieg – konservativ modelliert", "MODELL"),
-        ("Omnichannel", "3 Kanaele mit zeitabh. Share-Evolution", "Online CAGR 12.6%, Discretion-Faktor", "MODELL"),
+        ("Apothekenverteilung", "2 Kanaele (apothekenpflichtig)", "Online CAGR 12.6%, Discretion-Faktor", "MODELL"),
         ("Discretion-Bonus", "Kanal-Volumen * (1 + (disc-0.7)*0.15)", "ED-Stigma treibt anonyme Kanaele", "MODELL"),
         ("Telemed.-Disruption", "Exp. Decay + Pivot-Retention (15%)", "Zava/GoSpring verlieren Rx-Geschaeft", "MODELL"),
         ("Markenanteil-Erosion", "Linear: -3Pp/Jahr, Floor 15%", "Generikadruck analog UK", "MODELL"),

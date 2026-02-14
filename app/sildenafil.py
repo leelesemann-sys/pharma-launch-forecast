@@ -135,13 +135,12 @@ def show():
             otc_ramp = st.slider("Monate bis Peak", 6, 36, _d["otc_ramp"], key="sil_otc_ramp")
             new_patient = st.slider("Neue Patienten (% OTC-Vol.)", 30, 80, _d["new_patient"], key="sil_np") / 100
 
-        with st.expander("Omnichannel-Verteilung", expanded=False):
-            st.caption("Verteilung des OTC-Volumens auf Kanaele")
-            ch_apo = st.slider("Stationaere Apotheke (%)", 20, 80, 50, key="sil_ch_apo")
-            ch_online = st.slider("Online-Apotheke (%)", 10, 70, 40, key="sil_ch_online")
-            ch_drog = max(0, 100 - ch_apo - ch_online)
-            st.markdown(f"*Drogerie/Sonstige: {ch_drog}%*")
-            online_growth = st.slider("Online-Wachstum p.a. (Pp.)", 0, 10, 4, key="sil_og") / 100
+        with st.expander("Apothekenverteilung", expanded=False):
+            st.caption("Apothekenpflichtig: nur Apotheken-Kanaele")
+            ch_apo = st.slider("Stationaere Apotheke (%)", 20, 80, 55, key="sil_ch_apo")
+            ch_online = 100 - ch_apo
+            st.markdown(f"*Online-Apotheke: {ch_online}%*")
+            online_growth = st.slider("Online-Wachstum p.a. (Pp.)", 0, 10, 3, key="sil_og") / 100
 
         with st.expander("Marke vs. Generika OTC", expanded=False):
             brand_share = st.slider("Viagra Connect Anteil OTC (%)", 15, 70, _d["brand_share"], key="sil_brand") / 100
@@ -169,15 +168,11 @@ def show():
 
     channels = [
         ChannelParams(name="Stationaere Apotheke", share_of_otc=ch_apo / 100,
-                      share_trend_annual=-0.03, margin_pct=0.42,
+                      share_trend_annual=-online_growth, margin_pct=0.42,
                       distribution_cost_pct=0.06, discretion_factor=0.70),
         ChannelParams(name="Online-Apotheke", share_of_otc=ch_online / 100,
                       share_trend_annual=online_growth, margin_pct=0.30,
                       distribution_cost_pct=0.10, discretion_factor=1.0),
-        ChannelParams(name="Drogerie-/Supermarkt (falls freiverkaeuflich)",
-                      share_of_otc=max(0, ch_drog / 100),
-                      share_trend_annual=0.01, margin_pct=0.35,
-                      distribution_cost_pct=0.08, discretion_factor=0.50),
     ]
 
     params = SildenafilOtcParams(
@@ -283,7 +278,7 @@ def show():
 
     # ─── Chart 1: Dual Channel (Rx vs OTC packs) ──────────────────
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "Dual Channel", "Omnichannel", "Brand vs. Generika",
+        "Dual Channel", "Apothekenverteilung", "Brand vs. Generika",
         "Telemedizin", "Treatment Gap", "Profitabilitaet"
     ])
 
@@ -343,11 +338,6 @@ def show():
                 name="Online-Apotheke", stackgroup="one",
                 line=dict(color=TEAL),
             ))
-            fig2.add_trace(go.Scatter(
-                x=df["month"], y=df["ch_drogerie_packs"],
-                name="Drogerie/Sonstige", stackgroup="one",
-                line=dict(color=AMBER),
-            ))
             fig2.update_layout(
                 title="OTC-Volumen nach Vertriebskanal",
                 xaxis_title="Monate", yaxis_title="Packungen",
@@ -368,11 +358,6 @@ def show():
                 name="Online-Apotheke",
                 line=dict(color=TEAL, width=2),
             ))
-            fig2b.add_trace(go.Scatter(
-                x=df["month"], y=df["ch_drogerie_share"],
-                name="Drogerie/Sonstige",
-                line=dict(color=AMBER, width=2),
-            ))
             fig2b.update_layout(
                 title="Kanalanteil-Entwicklung",
                 xaxis_title="Monate", yaxis_title="Anteil",
@@ -390,10 +375,6 @@ def show():
         fig2c.add_trace(go.Bar(
             x=df["month"], y=df["ch_online_revenue"],
             name="Online", marker_color=TEAL,
-        ))
-        fig2c.add_trace(go.Bar(
-            x=df["month"], y=df["ch_drogerie_revenue"],
-            name="Drogerie", marker_color=AMBER,
         ))
         fig2c.update_layout(
             barmode="stack",
@@ -641,7 +622,7 @@ def show():
         |---|---|---|
         | OTC-Ramp | Logistische S-Kurve | UK Viagra Connect Launch 2018 |
         | Rx-Effekt | Exponentieller Decay (langsam) | UK: Rx stieg sogar post-Switch |
-        | Omnichannel | 3 Kanaele mit zeitabh. Shares | Online-Apotheke CAGR 12.6% |
+        | Apothekenverteilung | 2 Kanaele (apothekenpflichtig) | Online-Apotheke CAGR 12.6% |
         | Telemedizin | Exp. Decay + Pivot-Retention | Zava/GoSpring Geschaeftsmodell |
         | Markenanteil | Linearer Erosion + Premium | UK: Generika ab GBP 0.50/Tab |
         | Treatment Gap | Logistische Schliessung | UK: 63% Neupatienten |
