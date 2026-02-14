@@ -133,27 +133,27 @@ def show():
             rx_brand_share = st.slider("Viagra Markenanteil Rx (%)", 2, 25, 10, key="sil_rx_bs") / 100
             rx_decline = st.slider("Rx-Rueckgang durch OTC (%)", 0, 30, _d["rx_decline"], key="sil_rx_dec") / 100
 
-        with st.expander("OTC-Kanal", expanded=False):
+        with st.expander("OTC-Markt", expanded=False):
             otc_price = st.number_input("OTC Preis/Tablette (EUR)", 2.0, 15.0, 5.99, 0.5, key="sil_otc_p")
             otc_peak = st.number_input("OTC Peak Pack./Mon.", 100_000, 800_000, _d["otc_peak"], 10_000, key="sil_otc_peak")
             otc_ramp = st.slider("Monate bis Peak", 6, 36, _d["otc_ramp"], key="sil_otc_ramp")
             new_patient = st.slider("Neue Patienten (% OTC-Vol.)", 30, 80, _d["new_patient"], key="sil_np") / 100
+            st.markdown("---")
+            st.caption("Tadalafil-Migration (Cialis bleibt Rx)")
+            tada_monthly = st.number_input("Tadalafil Rx Pack./Mon.", 50_000, 300_000, 120_000, 5_000, key="sil_tada")
+            tada_switch = st.slider("Migration zu Sildenafil OTC (%)", 0, 30, 12, key="sil_tadas") / 100
 
-        with st.expander("Apothekenverteilung", expanded=False):
+        with st.expander("Stationaer vs. Online", expanded=False):
             st.caption("Apothekenpflichtig: nur Apotheken-Kanaele")
             ch_apo = st.slider("Stationaere Apotheke (%)", 20, 80, 55, key="sil_ch_apo")
             ch_online = 100 - ch_apo
             st.markdown(f"*Online-Apotheke: {ch_online}%*")
-            online_growth = st.slider("Online-Wachstum p.a. (Pp.)", 0, 10, 3, key="sil_og") / 100
+            online_growth = st.slider("Online-Wachstum p.a. (Pp.)", 0, 10, 2, key="sil_og") / 100
 
-        with st.expander("Marke vs. Generika OTC", expanded=False):
+        with st.expander("OTC Marke vs. Generika", expanded=False):
             brand_share = st.slider("Viagra Connect Anteil OTC (%)", 15, 70, _d["brand_share"], key="sil_brand") / 100
             brand_erosion = st.slider("Markenanteil-Erosion p.a. (Pp.)", 0, 10, 3, key="sil_berosion") / 100
             brand_premium = st.slider("Preispremium Marke (x)", 1.0, 3.0, 1.8, 0.1, key="sil_bprem")
-
-        with st.expander("Tadalafil-Migration", expanded=False):
-            tada_monthly = st.number_input("Tadalafil Rx Pack./Mon.", 50_000, 300_000, 120_000, 5_000, key="sil_tada")
-            tada_switch = st.slider("Migration zu Sildenafil OTC (%)", 0, 30, 12, key="sil_tadas") / 100
 
     # ─── Build params ──────────────────────────────────────────────
     # Scenario sets slider defaults; all values come from sliders.
@@ -571,10 +571,21 @@ def show():
         |---|---|---|
         | OTC-Ramp | Logistische S-Kurve | UK Viagra Connect Launch 2018 |
         | Rx-Effekt | Exponentieller Decay (langsam) | UK: Rx stieg sogar post-Switch |
-        | Apothekenverteilung | 2 Kanaele (apothekenpflichtig) | Online-Apotheke CAGR 12.6% |
+        | Apothekenverteilung | 2 Kanaele (apothekenpflichtig) | ABDA ZDF 2024: ~23% OTC online |
+        | Online-Wachstum | +2 Pp./Jahr | ABDA/DatamedIQ: +1,5-2 Pp./Jahr (2019-2024) |
+        | Online-Startanteil | 45% (Stigma-Kategorie) | Gewichtsabnahme 56%, Rauchentwoehn. 40% online |
+        | Diskretions-Bonus | Kanalverschiebung online | PMC: 36% der ED-Nutzer scham-/diskretionsgetrieben |
         | Markenanteil | Linearer Erosion + Premium | UK: Generika ab GBP 0.50/Tab |
         | Treatment Gap | Logistische Schliessung | UK: 63% Neupatienten |
         | Marketing | Kostenfaktor (kein Volumen-Effekt) | Ramp + Maintenance-Phase |
+
+        **Annahmen Online-Anteil (Stuetzung):**
+
+        | Annahme | Modellwert | Faktenbasis |
+        |---|---|---|
+        | Online-Startanteil | 45% | Allg. OTC: 23% (ABDA 2024). Stigma-Kategorien: Gewichtsabnahme 56%, Rauchentwoehn. 40% (ecommercegermany.com). ED-Stigma vergleichbar. |
+        | Online-Wachstum | +2 Pp./Jahr | Allg. OTC: ~+1,5-2 Pp./Jahr (ABDA/DatamedIQ 2019-2024, +8 Pp. in 5 Jahren). |
+        | Diskretions-Bonus | Kanalshift | PMC-Studie (DE, n=11.456): 23% Diskretion + 13% Scham = 36%. STI-Studie: 80% bevorzugen Postversand (PMC). |
 
         **Datenquellen (alle oeffentlich):**
         - Arnold M (2023). Public-Health-Impact OTC-Switch Sildenafil 50 mg. HSK Berlin, inav-Gutachten (Viatris)
@@ -584,6 +595,13 @@ def show():
         - Lee et al. (2021). UK Real-World-Studie, n=1.162 – signif. mehr Arzt-/Apothekenbesuche post-Switch
         - Gordijn et al. (2022). Apotheken-Beratungsqualitaet bei OTC-Sildenafil (Nordirland)
         - MHRA (2017). Public Assessment Report – Viagra Connect BTC-Reklassifizierung UK
+        - ABDA (2024). Zahlen, Daten, Fakten – Versandhandel: ~23% OTC online (237 Mio. Packungen)
+        - DatamedIQ (2022). OTC-Versandhandel: 22,6% Umsatzanteil, +8,1% YoY
+        - BVDVA/IQVIA (2024). OTC-Versandhandel: 49% des Mail-Order-Umsatzes, +8,1% YoY
+        - Sempora (2024). Top 15 Online-Apotheken: EUR 2,83 Mrd. Nettoumsatz
+        - PMC (Frontiers in Pharmacology, 2024). Online-Medikamentenkauf: Privatsphaere als Treiber bei ED
+        - PMC (Sexual Medicine, 2020). DE Online-Plattform ED, n=11.456: 36% scham-/diskretionsgetrieben
+        - ecommercegermany.com (2024). Stigma-Kategorien: Gewichtsabnahme 56%, Rauchentwoehn. 40% online
         - IQVIA Pharmamarkt DE, Apotheke Adhoc (PDE5-Marktdaten)
         - Handelsblatt / Citeline (BfArM SVA-Entscheidungen 2022/2023/2025)
         - PAGB/Frontier Economics (UK OTC Impact Report)

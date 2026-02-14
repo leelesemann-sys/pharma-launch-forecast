@@ -121,7 +121,7 @@ class SildenafilOtcParams:
         ChannelParams(
             name="Stationaere Apotheke",
             share_of_otc=0.55,
-            share_trend_annual=-0.03,
+            share_trend_annual=-0.02,   # ABDA ZDF 2024: OTC online +1.5-2 pp/yr (2019-2024)
             margin_pct=0.42,
             distribution_cost_pct=0.06,
             avg_basket_multiplier=1.0,
@@ -130,7 +130,7 @@ class SildenafilOtcParams:
         ChannelParams(
             name="Online-Apotheke",
             share_of_otc=0.45,
-            share_trend_annual=0.03,    # growing channel
+            share_trend_annual=0.02,    # ABDA ZDF 2024: ~+1.5-2 pp/yr general OTC
             margin_pct=0.30,            # lower margin, competitive pricing
             distribution_cost_pct=0.10, # shipping costs
             avg_basket_multiplier=1.15, # cross-sell via recommendation engines
