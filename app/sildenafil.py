@@ -196,28 +196,8 @@ def show():
         tadalafil_switch_to_sildenafil_otc=tada_switch,
     )
 
-    # DEBUG: Compare user params vs default params
-    import sys
-    from dataclasses import asdict
-    default_p = SildenafilOtcParams()
-    dp = asdict(default_p)
-    up = asdict(params)
-    diffs = {k: {"default": dp[k], "user": up[k], "types": f"{type(dp[k]).__name__} vs {type(up[k]).__name__}"}
-             for k in dp if dp[k] != up[k]}
-    if diffs:
-        st.warning(f"Param diffs vs default ({len(diffs)}):")
-        st.json(diffs)
-
-    try:
-        df = forecast_sildenafil_otc(params)
-        kpis = calculate_kpis_sildenafil(df)
-    except Exception as e:
-        import traceback
-        st.error(f"Engine error: {type(e).__name__}: {e}")
-        full_tb = traceback.format_exception(type(e), e, e.__traceback__)
-        st.code("".join(full_tb))
-        st.write(f"Python: {sys.version}")
-        st.stop()
+    df = forecast_sildenafil_otc(params)
+    kpis = calculate_kpis_sildenafil(df)
 
     # ═══════════════════════════════════════════════════════════════════
     # HEADER
