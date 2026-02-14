@@ -149,11 +149,10 @@ class SildenafilOtcParams:
         1.05, 1.00, 0.95, 0.95, 0.95, 1.00,    # Jul-Dec
     ])
 
-    # ─── Marketing & awareness ──────────────────────────────────
-    marketing_monthly_eur: float = 500_000   # higher than PPI: DTC brand building
-    awareness_peak: float = 0.75             # Viagra already high awareness
-    awareness_baseline: float = 0.60         # Viagra brand awareness pre-switch (already known)
-    awareness_ramp_months: int = 9           # fast: brand already established
+    # ─── Marketing ────────────────────────────────────────────────
+    marketing_monthly_eur: float = 500_000   # DTC brand building, cost only (no volume effect)
+    marketing_maintenance_factor: float = 0.5  # reduce to 50% after ramp phase
+    marketing_ramp_months: int = 18            # full spend for first 18 months, then maintenance
 
     # ─── Consumer funnel ────────────────────────────────────────
     trial_rate: float = 0.25                 # % of aware men with ED who try OTC
@@ -174,16 +173,6 @@ class SildenafilOtcParams:
 def _logistic(t: float, peak: float, midpoint: float, steepness: float) -> float:
     """Generic logistic S-curve."""
     return peak / (1.0 + np.exp(-steepness * (t - midpoint)))
-
-
-def _awareness_curve(month: int, baseline: float, peak: float, ramp: int) -> float:
-    """Awareness with baseline (Viagra is already known)."""
-    if ramp <= 0:
-        return peak
-    delta = peak - baseline
-    midpoint = ramp / 2
-    steepness = 6.0 / ramp
-    return baseline + delta / (1.0 + np.exp(-steepness * (month - midpoint)))
 
 
 def _otc_ramp(month: int, peak: int, ramp_months: int) -> float:
@@ -224,8 +213,7 @@ def forecast_sildenafil_otc(
     - OTC channel by distribution channel (Apotheke, Online)
     - Brand vs. generic OTC split
     - Tadalafil migration
-    - Consumer funnel metrics
-    - Profitability by channel
+    - Profitability (marketing as cost only, no volume feedback)
     """
     months = forecast_months or params.forecast_months
 
@@ -239,12 +227,6 @@ def forecast_sildenafil_otc(
         year_frac = m / 12.0
         season_idx = (m - 1) % 12
         season_factor = params.seasonality[season_idx]
-
-        # ─── Awareness (starts high for Viagra) ────────────────
-        awareness = _awareness_curve(
-            m, params.awareness_baseline,
-            params.awareness_peak, params.awareness_ramp_months
-        )
 
         # ─── Rx Channel ────────────────────────────────────────
         rx_packs = _rx_effect(
@@ -262,14 +244,10 @@ def forecast_sildenafil_otc(
         otc_base = _otc_ramp(m, params.otc_peak_packs_per_month, params.otc_ramp_months)
         otc_seasonal = otc_base * season_factor
 
-        # Awareness scaling
-        aw_ratio = awareness / params.awareness_peak if params.awareness_peak > 0 else 1.0
-        otc_demand = otc_seasonal * max(0.3, aw_ratio)  # floor at 30% (Viagra is known)
-
         # Price effect
         price_change = params.price_trend_annual * year_frac
         price_vol_effect = 1.0 + (price_change * params.price_elasticity)
-        otc_total_packs = max(0, otc_demand * price_vol_effect)
+        otc_total_packs = max(0, otc_seasonal * price_vol_effect)
 
         # ─── Tadalafil migration bonus ─────────────────────────
         tada_migration = _logistic(
@@ -359,10 +337,10 @@ def forecast_sildenafil_otc(
         otc_tablets = otc_total_packs_adj * params.otc_avg_pack_size
         total_tablets = rx_tablets + otc_tablets
 
-        # ─── Marketing ──────────────────────────────────────────
+        # ─── Marketing (cost only, no volume effect) ─────────────
         marketing_spend = params.marketing_monthly_eur
-        if m > params.awareness_ramp_months * 2:
-            marketing_spend *= 0.5  # maintenance mode
+        if m > params.marketing_ramp_months:
+            marketing_spend *= params.marketing_maintenance_factor
 
         # ─── Profitability ──────────────────────────────────────
         total_revenue = rx_revenue + total_otc_manufacturer_revenue
@@ -424,8 +402,7 @@ def forecast_sildenafil_otc(
             "total_revenue": round(total_revenue),
             "otc_share_tablets": otc_tablets / total_tablets if total_tablets > 0 else 0,
 
-            # Awareness & seasonality
-            "awareness": awareness,
+            # Seasonality
             "season_factor": season_factor,
 
             # Profitability
@@ -454,9 +431,13 @@ def calculate_kpis_sildenafil(df: pd.DataFrame) -> dict:
     last = df.iloc[-1]
     y1 = df[df["month"] <= 12]
 
-    # Crossover month (OTC mfr revenue > Rx revenue)
+    # Crossover month – revenue (OTC mfr revenue > Rx revenue)
     crossover = df[df["otc_manufacturer_revenue"] > df["rx_revenue"]]
     crossover_month = int(crossover.iloc[0]["month"]) if len(crossover) > 0 else None
+
+    # Crossover month – packs (OTC packs > Rx packs)
+    crossover_packs = df[df["otc_packs"] > df["rx_packs"]]
+    crossover_month_packs = int(crossover_packs.iloc[0]["month"]) if len(crossover_packs) > 0 else None
 
     # Peak OTC
     peak_idx = df["otc_packs"].idxmax()
@@ -486,6 +467,7 @@ def calculate_kpis_sildenafil(df: pd.DataFrame) -> dict:
         "total_5y_profit": last["cumulative_profit"],
         "total_5y_marketing": last["cumulative_marketing"],
         "crossover_month": crossover_month,
+        "crossover_month_packs": crossover_month_packs,
         "peak_otc_packs": peak_otc_packs,
         "peak_otc_month": peak_otc_month,
         "rx_decline_total": rx_decline_pct,
@@ -497,5 +479,4 @@ def calculate_kpis_sildenafil(df: pd.DataFrame) -> dict:
         "online_share_m24": online_share_m24,
         "treatment_rate_final": last["treatment_rate_effective"],
         "newly_treated_total": last["newly_treated_cumulative"],
-        "peak_awareness": float(df["awareness"].max()),
     }

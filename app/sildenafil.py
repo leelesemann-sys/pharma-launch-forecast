@@ -118,7 +118,7 @@ def show():
         _prev = st.session_state.get("_sil_prev_scenario")
         if _prev is not None and _prev != scenario:
             for _k in ["sil_rx_dec", "sil_otc_peak", "sil_otc_ramp",
-                        "sil_np", "sil_brand", "sil_mktg"]:
+                        "sil_np", "sil_brand"]:
                 st.session_state.pop(_k, None)
             st.session_state["_sil_prev_scenario"] = scenario
             st.rerun()
@@ -151,12 +151,6 @@ def show():
             brand_erosion = st.slider("Markenanteil-Erosion p.a. (Pp.)", 0, 10, 3, key="sil_berosion") / 100
             brand_premium = st.slider("Preispremium Marke (x)", 1.0, 3.0, 1.8, 0.1, key="sil_bprem")
 
-        with st.expander("Marketing & Awareness", expanded=False):
-            mktg = st.number_input("Marketing/Mon. (EUR)", 100_000, 2_000_000, _d["mktg"], 50_000, key="sil_mktg")
-            aw_peak = st.slider("Peak Awareness (%)", 50, 95, 75, key="sil_awp") / 100
-            aw_base = st.slider("Baseline Awareness (%)", 20, 70, 60, key="sil_awb") / 100
-            aw_ramp = st.slider("Awareness Ramp (Mon.)", 3, 18, 9, key="sil_awr")
-
         with st.expander("Tadalafil-Migration", expanded=False):
             tada_monthly = st.number_input("Tadalafil Rx Pack./Mon.", 50_000, 300_000, 120_000, 5_000, key="sil_tada")
             tada_switch = st.slider("Migration zu Sildenafil OTC (%)", 0, 30, 12, key="sil_tadas") / 100
@@ -188,10 +182,7 @@ def show():
         brand_otc_share_trend=-brand_erosion,
         brand_price_premium=brand_premium,
         channels=channels,
-        marketing_monthly_eur=mktg,
-        awareness_peak=aw_peak,
-        awareness_baseline=aw_base,
-        awareness_ramp_months=aw_ramp,
+        marketing_monthly_eur=_d["mktg"],
         tadalafil_rx_monthly=tada_monthly,
         tadalafil_switch_to_sildenafil_otc=tada_switch,
     )
@@ -223,12 +214,15 @@ def show():
             <div class="kpi-sublabel">Rx + OTC kumuliert</div>
         </div>""", unsafe_allow_html=True)
     with c3:
-        co = kpis.get("crossover_month")
-        co_text = f"Monat {co}" if co else "–"
+        co_rev = kpis.get("crossover_month")
+        co_packs = kpis.get("crossover_month_packs")
+        co_text = f"M{co_rev} / M{co_packs}" if co_rev and co_packs else (
+            f"Monat {co_rev}" if co_rev else "–"
+        )
         st.markdown(f"""<div class="kpi-card-amber">
             <div class="kpi-label">OTC > Rx ab</div>
             <div class="kpi-value">{co_text}</div>
-            <div class="kpi-sublabel">Umsatz-Crossover</div>
+            <div class="kpi-sublabel">Umsatz / Packungen</div>
         </div>""", unsafe_allow_html=True)
     with c4:
         st.markdown(f"""<div class="kpi-card-green">
@@ -286,9 +280,10 @@ def show():
             x=df["month"], y=df["otc_packs"], name="OTC Packungen",
             line=dict(color=TEAL, width=2.5),
         ))
-        if kpis["crossover_month"]:
-            fig1.add_vline(x=kpis["crossover_month"], line_dash="dot",
-                           line_color=AMBER, annotation_text="OTC > Rx")
+        if kpis["crossover_month_packs"]:
+            fig1.add_vline(x=kpis["crossover_month_packs"], line_dash="dot",
+                           line_color=AMBER,
+                           annotation_text=f"OTC > Rx (M{kpis['crossover_month_packs']})")
         fig1.update_layout(
             title="Rx vs. OTC Packungen/Monat",
             xaxis_title="Monate nach Switch", yaxis_title="Packungen",
@@ -307,6 +302,10 @@ def show():
             x=df["month"], y=df["otc_manufacturer_revenue"], name="OTC Umsatz (Hersteller)",
             marker_color="#5eead4",
         ))
+        if kpis["crossover_month"]:
+            fig1b.add_vline(x=kpis["crossover_month"], line_dash="dot",
+                            line_color=AMBER,
+                            annotation_text=f"OTC > Rx (M{kpis['crossover_month']})")
         fig1b.update_layout(
             barmode="stack",
             title="Rx vs. OTC Umsatz/Monat",
@@ -492,20 +491,6 @@ def show():
             )
             st.plotly_chart(fig_tg_rate, width="stretch")
 
-        # Awareness below (full width)
-        fig_aw = go.Figure()
-        fig_aw.add_trace(go.Scatter(
-            x=df["month"], y=df["awareness"],
-            name="Brand Awareness",
-            line=dict(color=AMBER, width=2.5),
-        ))
-        fig_aw.update_layout(
-            title="Consumer Awareness (Viagra OTC)",
-            xaxis_title="Monate nach Switch", yaxis_title="Awareness",
-            yaxis_tickformat=".0%", yaxis_range=[0, 1], height=340,
-        )
-        st.plotly_chart(fig_aw, width="stretch")
-
     # ─── Chart 5: Profitability ───────────────────────────────────
     with tab5:
         fig6 = go.Figure()
@@ -569,7 +554,8 @@ def show():
             "Gewinn 5J": f"EUR {k['total_5y_profit']/1e6:.0f}M",
             "Online M24": f"{k['online_share_m24']:.0%}",
             "Marke M12": f"{k['brand_share_m12']:.0%}",
-            "Crossover": f"M{k['crossover_month']}" if k['crossover_month'] else "–",
+            "Crossover (Umsatz)": f"M{k['crossover_month']}" if k['crossover_month'] else "–",
+            "Crossover (Pack.)": f"M{k['crossover_month_packs']}" if k['crossover_month_packs'] else "–",
         })
 
     st.dataframe(pd.DataFrame(comp_rows).set_index("Szenario"), width=900)
@@ -588,7 +574,7 @@ def show():
         | Apothekenverteilung | 2 Kanaele (apothekenpflichtig) | Online-Apotheke CAGR 12.6% |
         | Markenanteil | Linearer Erosion + Premium | UK: Generika ab GBP 0.50/Tab |
         | Treatment Gap | Logistische Schliessung | UK: 63% Neupatienten |
-        | Awareness | S-Kurve mit hoher Baseline | Viagra Markenbekanntheit >60% |
+        | Marketing | Kostenfaktor (kein Volumen-Effekt) | Ramp + Maintenance-Phase |
 
         **Datenquellen (alle oeffentlich):**
         - Arnold M (2023). Public-Health-Impact OTC-Switch Sildenafil 50 mg. HSK Berlin, inav-Gutachten (Viatris)
