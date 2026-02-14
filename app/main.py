@@ -10,6 +10,7 @@ Two perspectives:
 
 import sys
 import os
+import importlib
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -21,6 +22,9 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 from io import BytesIO
 
+# BUG-E2 fix: Force reimport to avoid Streamlit Cloud stale bytecode cache
+import models.forecast_engine as _engine_mod
+importlib.reload(_engine_mod)
 from models.forecast_engine import (
     OriginatorParams,
     GenericParams,
@@ -152,6 +156,16 @@ def show():
             ["Base Case", "Bull (Generika)", "Bear (Generika)", "Custom"],
             index=0, label_visibility="collapsed",
         )
+
+        # BUG-E3 fix: Reset slider session_state on scenario change
+        _prev_scenario = st.session_state.get("_eliq_prev_scenario")
+        if _prev_scenario is not None and _prev_scenario != scenario:
+            for _k in ["Preis-Reduktion (%)", "Erosions-Speed",
+                        "Boden-Anteil (%)", "Monate bis Boden"]:
+                st.session_state.pop(_k, None)
+            st.session_state["_eliq_prev_scenario"] = scenario
+            st.rerun()
+        st.session_state["_eliq_prev_scenario"] = scenario
 
         # ─── Markt ──────────────────────────────────────────────────────────
         with st.expander("Markt & Horizont", expanded=False):
@@ -773,20 +787,26 @@ def show():
     col_exp1, col_exp2, _ = st.columns([1, 1, 2])
 
     with col_exp1:
-        orig_params = OriginatorParams(
-            market_growth_annual=market_growth,
-            aut_idem_enabled=aut_idem_enabled,
-            aut_idem_quote_peak=aut_idem_peak / 100,
-            aut_idem_ramp_months=aut_idem_ramp,
-            aut_idem_full_months=aut_idem_full,
-        )
-        gen_params = GenericParams(
-            market_growth_annual=market_growth,
-            aut_idem_enabled=aut_idem_enabled,
-            aut_idem_quote_peak=aut_idem_peak / 100,
-            aut_idem_ramp_months=aut_idem_ramp,
-            aut_idem_full_months=aut_idem_full,
-        )
+        # BUG-E1 fix: Reuse the params configured by the user via sliders
+        # (both perspectives are always exported regardless of active view)
+        if is_originator:
+            orig_params = params  # already configured above with all slider values
+            gen_params = GenericParams(
+                market_growth_annual=market_growth,
+                aut_idem_enabled=aut_idem_enabled,
+                aut_idem_quote_peak=aut_idem_peak / 100,
+                aut_idem_ramp_months=aut_idem_ramp,
+                aut_idem_full_months=aut_idem_full,
+            )
+        else:
+            orig_params = OriginatorParams(
+                market_growth_annual=market_growth,
+                aut_idem_enabled=aut_idem_enabled,
+                aut_idem_quote_peak=aut_idem_peak / 100,
+                aut_idem_ramp_months=aut_idem_ramp,
+                aut_idem_full_months=aut_idem_full,
+            )
+            gen_params = params  # already configured above with all slider values
 
         df_orig = forecast_originator(orig_params, forecast_months=forecast_years * 12)
         df_gen = forecast_generic(gen_params, forecast_months=forecast_years * 12)

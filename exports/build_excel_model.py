@@ -152,7 +152,6 @@ def build_model():
         ("Anlaufzeit Festbetrag (Monate nach LOE)", 6, "input", "G-BA Festbetragsentscheid dauert ca. 3-6 Monate"),
         ("Volle Aut-idem-Quote nach (Monate)", 12, "input", "Monate bis Apotheken voll substituieren"),
         ("Peak Aut-idem-Quote", 0.75, "input_pct", "Max. Anteil der Rx, die substituiert werden"),
-        ("Aut-idem Exclusion Rate (Arzt)", 0.25, "input_pct", "Anteil der Aerzte, die aut-idem ausschliessen"),
         ("Mein Anteil an Aut-idem-Substitutionen", 0.30, "input_pct", "Welchen Anteil der Substitutionen bekomme ich?"),
     ]:
         row += 1

@@ -225,6 +225,9 @@ def forecast_originator(
     loe_date: str = "2026-05-01",
 ) -> pd.DataFrame:
     """Generate monthly forecast from ORIGINATOR perspective."""
+    # BUG-E6 fix: Fixed seed for reproducible pre-LOE noise
+    rng = np.random.default_rng(42)
+
     loe = pd.Timestamp(loe_date)
     start_date = loe - pd.DateOffset(months=12)
     dates = pd.date_range(start_date, periods=12 + forecast_months, freq="MS")
@@ -239,7 +242,7 @@ def forecast_originator(
         total_market_trx = params.baseline_monthly_trx / params.baseline_market_share * market_growth
 
         if not is_post_loe:
-            share = params.baseline_market_share + np.random.normal(0, 0.003)
+            share = params.baseline_market_share + rng.normal(0, 0.003)
             share = np.clip(share, params.baseline_market_share - 0.02,
                           params.baseline_market_share + 0.02)
             price = params.baseline_price_per_trx
@@ -367,7 +370,24 @@ def forecast_generic(
             midpoint = params.months_to_peak / 2
             steepness = 4.0 / params.months_to_peak * 1.5
             uptake = float(_logistic_curve(np.array([t]), midpoint, steepness)[0])
-            organic_share = params.target_peak_share * uptake * 0.5  # 50% from organic
+
+            # BUG-E4/E5 fix: num_competitors and total_generic_peak_share
+            # now influence organic share via competitive pressure.
+            #
+            # Logic: The total generic segment is shared among all competitors.
+            # With more competitors, price erosion accelerates and each player's
+            # achievable share is squeezed. The segment ceiling also constrains
+            # the maximum possible share for any single entrant.
+            #
+            # fair_share = what I'd get if the segment were split equally
+            # competitive_ceiling = segment / (competitors + 1) to account for
+            #   the fact that we are one of (num_competitors + 1) total generics
+            n_total_generics = max(1, params.num_competitors + 1)  # including myself
+            competitive_ceiling = params.total_generic_peak_share / n_total_generics
+            # Blend: target_peak_share is the ambition, competitive_ceiling is reality
+            # Use the lower of the two — can't capture more than the segment allows
+            effective_peak = min(params.target_peak_share, competitive_ceiling)
+            organic_share = effective_peak * uptake * 0.5  # 50% from organic
             organic_trx = int(total_market_trx * organic_share)
 
             # === AUT-IDEM COMPONENT ===
