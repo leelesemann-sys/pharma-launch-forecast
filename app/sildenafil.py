@@ -4,8 +4,12 @@ Pharma Launch Forecast – Use Case 4: Sildenafil Rx-to-OTC Switch (Viatris/Viag
 Advanced Rx-to-OTC model with pharmacy-only distribution.
 """
 
-import sys, os
+import sys, os, importlib
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+# Force reimport to clear any stale bytecode cache
+import models.sildenafil_otc_engine as _engine_mod
+importlib.reload(_engine_mod)
 
 import streamlit as st
 import pandas as pd
