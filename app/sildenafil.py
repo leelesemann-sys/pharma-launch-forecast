@@ -192,8 +192,19 @@ def show():
         tadalafil_switch_to_sildenafil_otc=tada_switch,
     )
 
-    df = forecast_sildenafil_otc(params)
-    kpis = calculate_kpis_sildenafil(df)
+    try:
+        df = forecast_sildenafil_otc(params)
+        kpis = calculate_kpis_sildenafil(df)
+    except Exception as e:
+        import traceback
+        st.error(f"Engine error: {type(e).__name__}: {e}")
+        st.code(traceback.format_exc())
+        st.json({
+            "channels_count": len(params.channels),
+            "channel_names": [c.name for c in params.channels],
+            "forecast_months": params.forecast_months,
+        })
+        st.stop()
 
     # ═══════════════════════════════════════════════════════════════════
     # HEADER
