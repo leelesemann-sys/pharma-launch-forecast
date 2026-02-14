@@ -7,8 +7,7 @@ Key differences vs. generic PPI switch model (Use Case 3):
   - Patient already pays 100% Rx (ED not covered by GKV) → low price friction
   - Massive treatment gap: ~67% of ED patients never see a doctor (shame barrier)
   - OTC removes stigma barrier → huge market expansion (UK ref: 63% new patients)
-  - Omnichannel: stationaere Apotheke vs. Online-Apotheke vs. Telemedizin
-  - Telemedizin gets cannibalized (Zava, GoSpring lose Rx raison d'être)
+  - Apothekenpflichtig: stationaere Apotheke vs. Online-Apotheke
   - Brand premium: Viagra vs. generic sildenafil OTC pricing power
   - Competitor dynamics: Tadalafil (Cialis) remains Rx-only → competitive moat
 
@@ -45,18 +44,6 @@ class ChannelParams:
     distribution_cost_pct: float = 0.06  # logistics
     avg_basket_multiplier: float = 1.0   # impulse/cross-sell effect
     discretion_factor: float = 0.8       # 1.0 = max discretion, affects stigma-driven demand
-
-
-@dataclass
-class TelemedChannel:
-    """Telemedizin channel that gets disrupted by OTC switch."""
-    name: str = "Telemedizin (Zava, GoSpring etc.)"
-    monthly_revenue_baseline: float = 4_500_000  # EUR/month pre-switch
-    monthly_consultations: int = 75_000           # consultations/month
-    avg_consultation_fee: float = 29.0            # EUR per consultation
-    decline_rate: float = 0.60                    # revenue lost to OTC over time
-    decline_months: int = 24                      # months for full disruption
-    pivot_retention: float = 0.15                 # % retained via value-add services
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -135,9 +122,6 @@ class SildenafilOtcParams:
         ),
     ])
 
-    # ─── Telemedizin disruption ─────────────────────────────────
-    telemed: TelemedChannel = field(default_factory=TelemedChannel)
-
     # ─── Competitor (Tadalafil stays Rx) ────────────────────────
     tadalafil_rx_monthly: int = 120_000    # Tadalafil Rx packs/month
     tadalafil_switch_to_sildenafil_otc: float = 0.12  # % Tadalafil users switching to OTC Sildenafil
@@ -204,16 +188,6 @@ def _rx_effect(month: int, initial: int, decline_rate: float, decline_months: in
     return floor + (initial - floor) * np.exp(-k * month)
 
 
-def _telemed_disruption(month: int, baseline: float, decline_rate: float,
-                         decline_months: int, pivot_retention: float) -> float:
-    """Telemedizin revenue decline as OTC removes need for Rx."""
-    if decline_months <= 0:
-        return baseline * pivot_retention
-    k = -np.log(1 - decline_rate) / decline_months
-    floor = baseline * pivot_retention
-    return floor + (baseline - floor) * np.exp(-k * month)
-
-
 def _channel_share(base_share: float, trend: float, month: int) -> float:
     """Channel share evolution over time."""
     return max(0.0, min(1.0, base_share + trend * (month / 12.0)))
@@ -233,7 +207,6 @@ def forecast_sildenafil_otc(
     - Rx channel performance
     - OTC channel by distribution channel (Apotheke, Online)
     - Brand vs. generic OTC split
-    - Telemedizin disruption
     - Tadalafil migration
     - Consumer funnel metrics
     - Profitability by channel
@@ -366,14 +339,6 @@ def forecast_sildenafil_otc(
         otc_tablets = otc_total_packs_adj * params.otc_avg_pack_size
         total_tablets = rx_tablets + otc_tablets
 
-        # ─── Telemedizin disruption ─────────────────────────────
-        telemed_rev = _telemed_disruption(
-            m, params.telemed.monthly_revenue_baseline,
-            params.telemed.decline_rate, params.telemed.decline_months,
-            params.telemed.pivot_retention
-        )
-        telemed_lost = params.telemed.monthly_revenue_baseline - telemed_rev
-
         # ─── Marketing ──────────────────────────────────────────
         marketing_spend = params.marketing_monthly_eur
         if m > params.awareness_ramp_months * 2:
@@ -449,10 +414,6 @@ def forecast_sildenafil_otc(
             "awareness": awareness,
             "season_factor": season_factor,
 
-            # Telemedizin
-            "telemed_revenue": round(telemed_rev),
-            "telemed_lost": round(telemed_lost),
-
             # Profitability
             "cogs": round(cogs),
             "marketing_spend": round(marketing_spend),
@@ -520,7 +481,6 @@ def calculate_kpis_sildenafil(df: pd.DataFrame) -> dict:
         "brand_share_m24": float(m24["otc_brand_share"].iloc[0]) if len(m24) > 0 else 0,
         "online_share_m12": online_share_m12,
         "online_share_m24": online_share_m24,
-        "telemed_lost_5y": df["telemed_lost"].sum(),
         "treatment_rate_final": last["treatment_rate_effective"],
         "newly_treated_total": last["newly_treated_cumulative"],
         "peak_awareness": float(df["awareness"].max()),

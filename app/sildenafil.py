@@ -1,7 +1,7 @@
 """
 Pharma Launch Forecast – Use Case 4: Sildenafil Rx-to-OTC Switch (Viatris/Viagra)
 ==================================================================================
-Advanced Rx-to-OTC model with omnichannel distribution and telemedizin disruption.
+Advanced Rx-to-OTC model with pharmacy-only distribution.
 """
 
 import sys, os
@@ -14,7 +14,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 from models.sildenafil_otc_engine import (
-    SildenafilOtcParams, ChannelParams, TelemedChannel,
+    SildenafilOtcParams, ChannelParams,
     forecast_sildenafil_otc, calculate_kpis_sildenafil,
 )
 
@@ -153,11 +153,6 @@ def show():
             aw_base = st.slider("Baseline Awareness (%)", 20, 70, 60, key="sil_awb") / 100
             aw_ramp = st.slider("Awareness Ramp (Mon.)", 3, 18, 9, key="sil_awr")
 
-        with st.expander("Telemedizin-Disruption", expanded=False):
-            tm_baseline = st.number_input("Telemed. Umsatz/Mon. (EUR)", 1_000_000, 10_000_000, 4_500_000, 250_000, key="sil_tm")
-            tm_decline = st.slider("Telemed. Umsatzrueckgang (%)", 20, 90, 60, key="sil_tmd") / 100
-            tm_pivot = st.slider("Telemed. Retention (%)", 5, 40, 15, key="sil_tmp") / 100
-
         with st.expander("Tadalafil-Migration", expanded=False):
             tada_monthly = st.number_input("Tadalafil Rx Pack./Mon.", 50_000, 300_000, 120_000, 5_000, key="sil_tada")
             tada_switch = st.slider("Migration zu Sildenafil OTC (%)", 0, 30, 12, key="sil_tadas") / 100
@@ -193,11 +188,6 @@ def show():
         awareness_peak=aw_peak,
         awareness_baseline=aw_base,
         awareness_ramp_months=aw_ramp,
-        telemed=TelemedChannel(
-            monthly_revenue_baseline=tm_baseline,
-            decline_rate=tm_decline,
-            pivot_retention=tm_pivot,
-        ),
         tadalafil_rx_monthly=tada_monthly,
         tadalafil_switch_to_sildenafil_otc=tada_switch,
     )
@@ -259,9 +249,9 @@ def show():
         </div>""", unsafe_allow_html=True)
     with c7:
         st.markdown(f"""<div class="kpi-card-red">
-            <div class="kpi-label">Telemed. Verlust 5J</div>
-            <div class="kpi-value">EUR {kpis['telemed_lost_5y']/1e6:.0f}M</div>
-            <div class="kpi-sublabel">Zava, GoSpring etc.</div>
+            <div class="kpi-label">Rx-Rueckgang gesamt</div>
+            <div class="kpi-value">{kpis['rx_decline_total']:.0%}</div>
+            <div class="kpi-sublabel">ueber 5 Jahre</div>
         </div>""", unsafe_allow_html=True)
     with c8:
         st.markdown(f"""<div class="kpi-card-green">
@@ -277,9 +267,9 @@ def show():
     # ═══════════════════════════════════════════════════════════════════
 
     # ─── Chart 1: Dual Channel (Rx vs OTC packs) ──────────────────
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "Dual Channel", "Apothekenverteilung", "Brand vs. Generika",
-        "Telemedizin", "Treatment Gap", "Profitabilitaet"
+        "Treatment Gap", "Profitabilitaet"
     ])
 
     with tab1:
@@ -450,51 +440,8 @@ def show():
         )
         st.plotly_chart(fig3c, width="stretch")
 
-    # ─── Chart 4: Telemedizin Disruption ──────────────────────────
+    # ─── Chart 4: Treatment Gap ───────────────────────────────────
     with tab4:
-        col_e, col_f = st.columns(2)
-
-        with col_e:
-            fig4 = go.Figure()
-            fig4.add_trace(go.Scatter(
-                x=df["month"], y=df["telemed_revenue"],
-                name="Telemedizin Umsatz",
-                line=dict(color=RED, width=2.5),
-                fill="tozeroy", fillcolor="rgba(192,57,43,0.1)",
-            ))
-            fig4.add_hline(y=params.telemed.monthly_revenue_baseline,
-                           line_dash="dash", line_color="#999",
-                           annotation_text="Baseline vor Switch")
-            fig4.update_layout(
-                title="Telemedizin-Umsatz (Zava, GoSpring etc.)",
-                xaxis_title="Monate nach Switch", yaxis_title="EUR/Monat",
-                height=400,
-            )
-            st.plotly_chart(fig4, width="stretch")
-
-        with col_f:
-            fig4b = go.Figure()
-            fig4b.add_trace(go.Bar(
-                x=df["month"], y=df["telemed_lost"],
-                name="Entgangener Umsatz",
-                marker_color="rgba(192,57,43,0.6)",
-            ))
-            fig4b.update_layout(
-                title="Telemedizin: Monatlicher Umsatzverlust durch OTC",
-                xaxis_title="Monate", yaxis_title="EUR/Monat",
-                height=400,
-            )
-            st.plotly_chart(fig4b, width="stretch")
-
-        st.info(f"""
-        **Telemedizin-Disruption:** OTC-Switch entfernt den Hauptgrund fuer Telemedizin-ED-Konsultationen
-        (Rezeptpflicht). Plattformen wie Zava/GoSpring verlieren geschaetzt **EUR {kpis['telemed_lost_5y']/1e6:.0f}M**
-        Umsatz ueber 5 Jahre. Verbleibende {params.telemed.pivot_retention:.0%} durch Value-Add-Services
-        (Beratung, Diagnostik, Therapiebegleitung).
-        """)
-
-    # ─── Chart 5: Treatment Gap ───────────────────────────────────
-    with tab5:
         fig5 = go.Figure()
         fig5.add_trace(go.Scatter(
             x=df["month"], y=df["treatment_rate_effective"],
@@ -543,8 +490,8 @@ def show():
             )
             st.plotly_chart(fig5c, width="stretch")
 
-    # ─── Chart 6: Profitability ───────────────────────────────────
-    with tab6:
+    # ─── Chart 5: Profitability ───────────────────────────────────
+    with tab5:
         fig6 = go.Figure()
         fig6.add_trace(go.Scatter(
             x=df["month"], y=df["cumulative_total_revenue"],
@@ -616,14 +563,13 @@ def show():
     # ═══════════════════════════════════════════════════════════════════
     with st.expander("Methodik & Datenquellen"):
         st.markdown("""
-        **Modell-Architektur:** Dual-Channel Rx/OTC mit Omnichannel-Vertriebsmodellierung
+        **Modell-Architektur:** Dual-Channel Rx/OTC mit Apothekenverteilung
 
         | Komponente | Methodik | Referenz |
         |---|---|---|
         | OTC-Ramp | Logistische S-Kurve | UK Viagra Connect Launch 2018 |
         | Rx-Effekt | Exponentieller Decay (langsam) | UK: Rx stieg sogar post-Switch |
         | Apothekenverteilung | 2 Kanaele (apothekenpflichtig) | Online-Apotheke CAGR 12.6% |
-        | Telemedizin | Exp. Decay + Pivot-Retention | Zava/GoSpring Geschaeftsmodell |
         | Markenanteil | Linearer Erosion + Premium | UK: Generika ab GBP 0.50/Tab |
         | Treatment Gap | Logistische Schliessung | UK: 63% Neupatienten |
         | Awareness | S-Kurve mit hoher Baseline | Viagra Markenbekanntheit >60% |
@@ -633,7 +579,6 @@ def show():
         - Handelsblatt / Citeline (BfArM SVA-Entscheidungen 2022/2023/2025)
         - PMC / Lee et al. 2021 (UK Real-World-Studie, n=1,162)
         - PAGB/Frontier Economics (UK OTC Impact Report)
-        - GoSpring / Zava (Telemedizin-Marktdaten)
         - Viatris Investor Relations, Newsroom
         """)
 

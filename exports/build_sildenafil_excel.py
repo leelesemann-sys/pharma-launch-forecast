@@ -449,7 +449,6 @@ def build_model():
         ("Viagra Markenanteil M12", "brand_share_m12", "pct"),
         ("Online-Anteil M24", "online_share_m24", "pct"),
         ("Rx-Rueckgang gesamt", "rx_decline_total", "pct"),
-        ("Telemed. Verlust 5J", "telemed_lost_5y", "eur"),
         ("Therapiequote (neu)", "treatment_rate_final", "pct"),
         ("Marketing-Invest 5J", "total_5y_marketing", "eur"),
     ]:
