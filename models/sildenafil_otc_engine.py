@@ -388,12 +388,12 @@ def forecast_sildenafil_otc(
             "otc_tablets": round(otc_tablets),
 
             # OTC by channel (apothekenpflichtig: Apotheke + Online only)
-            "ch_apotheke_packs": channel_data[params.channels[0].name]["packs"],
-            "ch_apotheke_revenue": channel_data[params.channels[0].name]["manufacturer_revenue"],
-            "ch_apotheke_share": channel_data[params.channels[0].name]["share"],
-            "ch_online_packs": channel_data[params.channels[1].name]["packs"],
-            "ch_online_revenue": channel_data[params.channels[1].name]["manufacturer_revenue"],
-            "ch_online_share": channel_data[params.channels[1].name]["share"],
+            "ch_apotheke_packs": channel_data.get(params.channels[0].name, {}).get("packs", 0) if len(params.channels) > 0 else 0,
+            "ch_apotheke_revenue": channel_data.get(params.channels[0].name, {}).get("manufacturer_revenue", 0) if len(params.channels) > 0 else 0,
+            "ch_apotheke_share": channel_data.get(params.channels[0].name, {}).get("share", 0) if len(params.channels) > 0 else 0,
+            "ch_online_packs": channel_data.get(params.channels[1].name, {}).get("packs", 0) if len(params.channels) > 1 else 0,
+            "ch_online_revenue": channel_data.get(params.channels[1].name, {}).get("manufacturer_revenue", 0) if len(params.channels) > 1 else 0,
+            "ch_online_share": channel_data.get(params.channels[1].name, {}).get("share", 0) if len(params.channels) > 1 else 0,
 
             # Brand vs Generic OTC
             "otc_brand_packs": round(otc_brand_packs),

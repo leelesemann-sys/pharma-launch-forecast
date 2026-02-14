@@ -200,7 +200,7 @@ def show():
     # ═══════════════════════════════════════════════════════════════════
     st.markdown(f"## Sildenafil Rx-to-OTC Switch Forecast")
     st.markdown(f"*Viatris / Viagra Connect – Szenario: **{scenario}** | "
-                f"Omnichannel-Modell mit Telemedizin-Disruption*")
+                f"Dual-Channel Apotheken-Modell (apothekenpflichtig)*")
 
     # ═══════════════════════════════════════════════════════════════════
     # KPI CARDS (Row 1)
