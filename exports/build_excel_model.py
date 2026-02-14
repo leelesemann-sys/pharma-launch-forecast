@@ -122,8 +122,10 @@ def build_model():
     ws.merge_range(row, 1, row, 3, "Authorized Generic Strategie", fmt["subsection"])
     for label, value, fk, hint in [
         ("Authorized Generic launchen?", "NEIN", "input_bool", "JA oder NEIN - Eigenes Generikum unter Zweitmarke?"),
-        ("AG Anteil am Generika-Segment", 0.25, "input_pct", "Anteil der Generika-Verordnungen fuer AG"),
-        ("AG Preis-Discount vs. Originator", 0.30, "input_pct", "Preisabschlag des AG"),
+        ("AG Anteil am Generika-Segment (initial)", 0.25, "input_pct", "Initialer Anteil der Generika-Verordnungen fuer AG"),
+        ("AG Anteil-Erosion Speed", 0.5, "input", "0=statisch, 1=moderate Erosion, 2=schnelle Erosion"),
+        ("AG Preis-Discount vs. Originator (initial)", 0.30, "input_pct", "Initialer Preisabschlag des AG"),
+        ("AG Discount-Zunahme Speed", 0.5, "input", "0=statisch, 1=moderater Preisverfall, 2=schneller Preisverfall"),
     ]:
         row += 1
         write_input_row(ws, row, label, value, fk, hint)
@@ -251,7 +253,7 @@ def build_model():
         ("Originator Boden-Share", 0.18, 0.12, 0.08),
         ("Aut-idem Peak-Quote", 0.60, 0.75, 0.85),
         ("Mein Peak Share", 0.06, 0.10, 0.15),
-        ("Generika-Segment Peak", 0.40, 0.55, 0.65),
+        ("Generika gesamt Peak Share", 0.40, 0.55, 0.65),
         ("Mein Preis-Discount", 0.35, 0.45, 0.50),
         ("Marktwachstum p.a.", 0.01, 0.02, 0.03),
         ("Tender-Gewinnquote (Durchschn.)", 0.20, 0.40, 0.60),
@@ -616,6 +618,8 @@ def build_model():
         ("Tender-Gewinnwahrsch.", "20-60%", "Pro Kasse individuell, abhaengig von Preisaggression", "ANNAHME"),
         ("COGS", "25%", "Branchenueblich Small Molecule Generika", "ANNAHME"),
         ("SG&A", "EUR 150K/Monat", "Firmenspezifisch", "ANNAHME"),
+        ("AG Anteil-Erosion Speed", "0.5", "AG verliert Anteil an unabh. Generika; 0=statisch, 2=schnell", "ANNAHME"),
+        ("AG Discount-Zunahme Speed", "0.5", "AG-Preis naehert sich Generika-Preis an; 0=statisch, 2=schnell", "ANNAHME"),
     ]
     for param, val, reason, cat in assumptions:
         row += 1
@@ -639,6 +643,10 @@ def build_model():
          "Kein binares Modell; gewichteter Durchschnitt ueber Kassen-Portfolio", "MODELL"),
         ("Preis-Erosion", "Zusaetzlicher Preisverfall: +0.3%/Monat, Max 15%",
          "Beobachteter Trend in reifen Generika-Maerkten", "MODELL"),
+        ("AG Anteil-Erosion", "AG_Share(t) = max(2%, Initial * e^(-speed*0.05*t))",
+         "AG verliert Anteil an unabh. Generika ueber Zeit; Floor bei 2%", "MODELL"),
+        ("AG Discount-Zunahme", "AG_Disc(t) = min(85%, 1 - (1-Init) * e^(-speed*0.03*t))",
+         "AG-Preis naehert sich Generika-Niveau an; Cap bei 85%", "MODELL"),
     ]
     for name, formula, ref, cat in models:
         row += 1

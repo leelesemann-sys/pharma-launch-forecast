@@ -146,10 +146,10 @@ def show():
         # Perspective + Scenario (always visible, compact)
         perspective = st.radio(
             "Perspektive",
-            ["\U0001f3e2 Originator", "\U0001f48a Generika-Anbieter"],
+            ["\U0001f3e2 Original-Anbieter", "\U0001f48a Generika-Anbieter"],
             index=0, horizontal=True,
         )
-        is_originator = "Originator" in perspective
+        is_originator = "Original-Anbieter" in perspective
 
         scenario = st.selectbox(
             "Szenario",
@@ -168,12 +168,12 @@ def show():
         st.session_state["_eliq_prev_scenario"] = scenario
 
         # ─── Markt ──────────────────────────────────────────────────────────
-        with st.expander("Markt & Horizont", expanded=False):
+        forecast_years = 7  # Fixed horizon
+        with st.expander("Markt NOAK/DOAK", expanded=False):
             market_growth = st.slider(
                 "Marktwachstum p.a. (%)", 0.0, 5.0, 2.0, 0.5,
                 help="NOAK-Marktwachstum"
             ) / 100
-            forecast_years = st.slider("Horizont (Jahre)", 1, 7, 5)
 
         # ─── Aut-idem ───────────────────────────────────────────────────────
         with st.expander("Aut-idem / Substitution", expanded=False):
@@ -209,9 +209,20 @@ def show():
                 authorized_generic = st.checkbox("AG launchen?", value=False)
                 ag_share = 0.25
                 ag_discount = 0.30
+                ag_share_decay = 0.0
+                ag_discount_growth = 0.0
                 if authorized_generic:
-                    ag_share = st.slider("AG-Anteil Generika (%)", 10, 50, 25, 5) / 100
-                    ag_discount = st.slider("AG Preis-Discount (%)", 20, 60, 30, 5) / 100
+                    ag_share = st.slider("AG-Anteil am Generika-Segment (%)", 10, 50, 25, 5,
+                                         help="Initialer Anteil des AG an allen Generika-Verordnungen") / 100
+                    ag_share_decay = st.slider("↘ Anteil-Erosion Speed", 0.0, 2.0, 0.5, 0.1,
+                                               help="0=statisch, 1=moderate Erosion, 2=schnelle Erosion. "
+                                                    "AG verliert Marktanteil an unabhängige Generika.")
+                    st.divider()
+                    ag_discount = st.slider("AG Preis-Discount (%)", 20, 60, 30, 5,
+                                            help="Initialer Preisabschlag des AG vs. Originator-Preis") / 100
+                    ag_discount_growth = st.slider("↘ Discount-Zunahme Speed", 0.0, 2.0, 0.5, 0.1,
+                                                    help="0=statisch, 1=moderater Preisverfall, 2=schneller Preisverfall. "
+                                                         "AG-Preis nähert sich Generika-Preis an.")
 
             params = OriginatorParams(
                 price_reduction_pct=price_reduction / 100,
@@ -222,6 +233,8 @@ def show():
                 authorized_generic=authorized_generic,
                 ag_share_of_generics=ag_share,
                 ag_price_discount=ag_discount,
+                ag_share_decay_speed=ag_share_decay,
+                ag_discount_growth_speed=ag_discount_growth,
                 aut_idem_enabled=aut_idem_enabled,
                 aut_idem_quote_peak=aut_idem_peak / 100,
                 aut_idem_ramp_months=aut_idem_ramp,
@@ -234,12 +247,14 @@ def show():
                 company_name = st.text_input("Firma", value="Mein Unternehmen")
                 launch_offset = st.slider("Launch nach LOE (Mon.)", 0, 12, 0, 1)
                 price_discount = st.slider("Preis-Discount (%)", 20, 70, 45, 5)
-                target_peak = st.slider("Ziel-Marktanteil (%)", 2, 25, 10, 1)
+                target_peak = st.slider("Peak-Marktanteil (%)", 2, 25, 10, 1)
                 months_to_peak = st.slider("Mon. bis Peak", 6, 36, 18, 3)
 
-            with st.expander("Wettbewerb", expanded=False):
-                num_competitors = st.slider("Andere Generika", 1, 10, 5, 1)
-                total_generic_peak = st.slider("Segment Peak (%)", 20, 70, 55, 5)
+            with st.expander("Generika Marktanteil", expanded=False):
+                generic_segment_peak = st.slider("Generika gesamt Peak Share (%)", 20, 70, 55, 5,
+                                                  help="Peak-Marktanteil aller Generika zusammen (inkl. meines)")
+                generic_segment_months = st.slider("Mon. bis Peak Share", 12, 48, 24, 3,
+                                                    help="Monate nach LOE bis das Generika-Segment seinen Peak erreicht")
 
             with st.expander("Kosten", expanded=False):
                 cogs_pct = st.slider("COGS (%)", 10, 50, 25, 5)
@@ -287,8 +302,8 @@ def show():
                 price_discount_vs_originator=price_discount / 100,
                 target_peak_share=target_peak / 100,
                 months_to_peak=months_to_peak,
-                num_competitors=num_competitors,
-                total_generic_peak_share=total_generic_peak / 100,
+                generic_segment_peak_share=generic_segment_peak / 100,
+                generic_segment_months_to_peak=generic_segment_months,
                 cogs_pct_of_revenue=cogs_pct / 100,
                 sga_monthly_eur=sga_monthly,
                 launch_investment_eur=launch_invest,
@@ -317,7 +332,7 @@ def show():
         # ═══════════════════════════════════════════════════════════════════
         st.markdown(
             '<div class="perspective-header originator-header">'
-            '\U0001f3e2 Perspektive: Originator (BMS / Pfizer) \u2013 Revenue at Risk'
+            '\U0001f3e2 Perspektive: Original-Anbieter \u2013 Revenue at Risk'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -497,7 +512,7 @@ def show():
         # ═══════════════════════════════════════════════════════════════════
         st.markdown(
             '<div class="perspective-header generic-header">'
-            f'\U0001f48a Perspektive: Generika-Anbieter ({params.my_company_name}) \u2013 Market Opportunity'
+            '\U0001f48a Perspektive: Generika-Anbieter \u2013 Market Opportunity'
             '</div>',
             unsafe_allow_html=True,
         )

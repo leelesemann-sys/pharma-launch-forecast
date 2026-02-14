@@ -47,8 +47,10 @@ class OriginatorParams:
 
     # Authorized Generic
     authorized_generic: bool = False
-    ag_share_of_generics: float = 0.25
-    ag_price_discount: float = 0.30
+    ag_share_of_generics: float = 0.25        # Initial AG share of generic segment
+    ag_price_discount: float = 0.30           # Initial AG price discount vs originator
+    ag_share_decay_speed: float = 0.0         # 0=static, 1=moderate decay, 2=fast decay
+    ag_discount_growth_speed: float = 0.0     # 0=static, 1=moderate growth, 2=fast growth
 
 
 @dataclass
@@ -65,9 +67,9 @@ class GenericParams:
     target_peak_share: float = 0.10
     months_to_peak: int = 18
 
-    # Competition
-    num_competitors: int = 5
-    total_generic_peak_share: float = 0.55
+    # Generika-Segment (Gesamtmarkt inkl. meines Produkts)
+    generic_segment_peak_share: float = 0.55    # Peak share aller Generika zusammen
+    generic_segment_months_to_peak: int = 24    # Monate bis der Generika-Markt seinen Peak erreicht
 
     # Costs & profitability
     cogs_pct_of_revenue: float = 0.25
@@ -291,9 +293,28 @@ def forecast_originator(
 
         ag_revenue = 0
         ag_trx = 0
+        ag_share_current = 0.0
+        ag_discount_current = 0.0
         if params.authorized_generic and is_post_loe and months_since_loe >= 0:
-            ag_trx = int(generic_trx * params.ag_share_of_generics)
-            ag_price = params.baseline_price_per_trx * (1 - params.ag_price_discount)
+            # Dynamic AG share: decays over time as independent generics gain ground
+            # decay_factor: speed=0 → 1.0 (static), speed=1 → ~0.37 at 20mo, speed=2 → ~0.14 at 20mo
+            ag_share_current = params.ag_share_of_generics * np.exp(
+                -params.ag_share_decay_speed * 0.05 * months_since_loe
+            )
+            ag_share_current = max(0.02, ag_share_current)  # Floor: 2% minimum share
+
+            # Dynamic AG discount: grows over time as price pressure increases
+            # Discount approaches 100% asymptotically; speed=0 → static
+            if params.ag_discount_growth_speed > 0:
+                ag_discount_current = 1.0 - (1.0 - params.ag_price_discount) * np.exp(
+                    -params.ag_discount_growth_speed * 0.03 * months_since_loe
+                )
+                ag_discount_current = min(0.85, ag_discount_current)  # Cap: max 85% discount
+            else:
+                ag_discount_current = params.ag_price_discount
+
+            ag_trx = int(generic_trx * ag_share_current)
+            ag_price = params.baseline_price_per_trx * (1 - ag_discount_current)
             ag_revenue = ag_trx * ag_price
 
         rows.append({
@@ -313,6 +334,8 @@ def forecast_originator(
             "revenue_at_risk": round(revenue_at_risk, 2),
             "cumulative_revenue_at_risk": 0,
             "ag_trx": ag_trx,
+            "ag_share_current": round(ag_share_current, 4),
+            "ag_discount_current": round(ag_discount_current, 4),
             "ag_revenue": round(ag_revenue, 2),
             "total_originator_revenue": round(revenue + ag_revenue, 2),
         })
@@ -348,6 +371,10 @@ def forecast_generic(
         market_growth = (1 + params.market_growth_annual / 12) ** i
         total_market_trx = params.total_market_monthly_trx * market_growth
 
+        # Generika-Segment S-curve (used in both branches)
+        seg_midpoint = params.generic_segment_months_to_peak / 2
+        seg_steepness = 4.0 / params.generic_segment_months_to_peak * 1.2
+
         if not is_launched:
             my_share = 0.0
             my_trx = 0
@@ -358,11 +385,10 @@ def forecast_generic(
             tender_boost = 1.0
             tender_trx = 0
             organic_trx = 0
-            total_generic_share = _logistic_curve(
+            total_generic_share = float(_logistic_curve(
                 np.array([months_since_loe]),
-                midpoint=9, steepness=0.35
-            )[0] * params.total_generic_peak_share
-            total_generic_share = float(total_generic_share)
+                midpoint=seg_midpoint, steepness=seg_steepness
+            )[0]) * params.generic_segment_peak_share
         else:
             t = months_since_launch
 
@@ -371,22 +397,10 @@ def forecast_generic(
             steepness = 4.0 / params.months_to_peak * 1.5
             uptake = float(_logistic_curve(np.array([t]), midpoint, steepness)[0])
 
-            # BUG-E4/E5 fix: num_competitors and total_generic_peak_share
-            # now influence organic share via competitive pressure.
-            #
-            # Logic: The total generic segment is shared among all competitors.
-            # With more competitors, price erosion accelerates and each player's
-            # achievable share is squeezed. The segment ceiling also constrains
-            # the maximum possible share for any single entrant.
-            #
-            # fair_share = what I'd get if the segment were split equally
-            # competitive_ceiling = segment / (competitors + 1) to account for
-            #   the fact that we are one of (num_competitors + 1) total generics
-            n_total_generics = max(1, params.num_competitors + 1)  # including myself
-            competitive_ceiling = params.total_generic_peak_share / n_total_generics
-            # Blend: target_peak_share is the ambition, competitive_ceiling is reality
-            # Use the lower of the two — can't capture more than the segment allows
-            effective_peak = min(params.target_peak_share, competitive_ceiling)
+            # Organic share: target_peak_share represents the user's estimate
+            # of achievable peak market share (already accounts for competition).
+            # Cap at segment peak to ensure consistency.
+            effective_peak = min(params.target_peak_share, params.generic_segment_peak_share)
             organic_share = effective_peak * uptake * 0.5  # 50% from organic
             organic_trx = int(total_market_trx * organic_share)
 
@@ -424,8 +438,8 @@ def forecast_generic(
 
             total_generic_share = float(_logistic_curve(
                 np.array([months_since_loe]),
-                midpoint=9, steepness=0.35
-            )[0]) * params.total_generic_peak_share
+                midpoint=seg_midpoint, steepness=seg_steepness
+            )[0]) * params.generic_segment_peak_share
 
         # Profitability
         cogs = my_revenue * params.cogs_pct_of_revenue if is_launched else 0
