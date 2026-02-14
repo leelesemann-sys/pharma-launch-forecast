@@ -192,21 +192,23 @@ def show():
         tadalafil_switch_to_sildenafil_otc=tada_switch,
     )
 
+    # DEBUG: Test with default params first to isolate issue
+    import sys
+    try:
+        test_p = SildenafilOtcParams()
+        test_df = forecast_sildenafil_otc(test_p)
+        st.success(f"Default params: OK ({len(test_df)} rows)")
+    except Exception as e:
+        st.error(f"Default params FAILED: {type(e).__name__}: {e}")
+
     try:
         df = forecast_sildenafil_otc(params)
         kpis = calculate_kpis_sildenafil(df)
     except Exception as e:
-        import traceback, sys
+        import traceback
         st.error(f"Engine error: {type(e).__name__}: {e}")
-        # Show full exception chain
         full_tb = traceback.format_exception(type(e), e, e.__traceback__)
         st.code("".join(full_tb))
-        # Show all params as dict
-        from dataclasses import asdict
-        try:
-            st.json(asdict(params))
-        except Exception:
-            st.code(str(params))
         st.write(f"Python: {sys.version}")
         st.stop()
 
